@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+data/raw/
+data/interim/
+*.gguf
+*.safetensors
+*.bin
+runs/
+checkpoints/
+.env
+*.ipynb_checkpoints/
