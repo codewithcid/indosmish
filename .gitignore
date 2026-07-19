@@ -11,5 +11,6 @@ checkpoints/
 results/best/
 results/*.log
 data/raw/
+app/backend/model/
 .env
 *.ipynb_checkpoints/
