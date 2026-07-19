@@ -14,6 +14,7 @@ import argparse
 import numpy as np
 import torch
 from datasets import Dataset
+from sklearn.utils.class_weight import compute_class_weight
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -28,6 +29,23 @@ from .data_utils import filter_arm, load_split
 
 L2I = {l: i for i, l in enumerate(LABELS)}
 I2L = {i: l for l, i in L2I.items()}
+
+
+class WeightedTrainer(Trainer):
+    """Trainer with class-weighted cross-entropy, so the minority smishing class is
+    not collapsed into spam. Weights are inverse-frequency (balanced), matching the
+    classical baseline's class_weight='balanced' for a fair comparison."""
+
+    def __init__(self, class_weights=None, **kwargs):
+        super().__init__(**kwargs)
+        self._class_weights = class_weights
+
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        labels = inputs.pop("labels")
+        outputs = model(**inputs)
+        w = self._class_weights.to(outputs.logits.device) if self._class_weights is not None else None
+        loss = torch.nn.functional.cross_entropy(outputs.logits, labels, weight=w)
+        return (loss, outputs) if return_outputs else loss
 
 
 def _to_ds(df, tok, max_len):
@@ -54,6 +72,12 @@ def main() -> None:
     ds_tr = _to_ds(train, tok, ecfg["max_length"])
     ds_va = _to_ds(val, tok, ecfg["max_length"])
 
+    # Inverse-frequency class weights (balanced) over the training labels.
+    y = np.array([L2I[x] for x in train["label"]])
+    cw = compute_class_weight("balanced", classes=np.arange(len(LABELS)), y=y)
+    class_weights = torch.tensor(cw, dtype=torch.float)
+    print(f"Class weights (ham/spam/smishing): {cw.round(3)}")
+
     def hf_metrics(eval_pred):
         logits, labels = eval_pred
         pred = np.argmax(logits, axis=-1)
@@ -77,8 +101,14 @@ def main() -> None:
         report_to="none",
         seed=cfg["seed"],
     )
-    trainer = Trainer(model=model, args=targs, train_dataset=ds_tr,
-                      eval_dataset=ds_va, tokenizer=tok, compute_metrics=hf_metrics)
+    # transformers >=5 renamed Trainer(tokenizer=) -> processing_class=.
+    trainer_kwargs = dict(model=model, args=targs, train_dataset=ds_tr,
+                          eval_dataset=ds_va, compute_metrics=hf_metrics,
+                          class_weights=class_weights)
+    try:
+        trainer = WeightedTrainer(processing_class=tok, **trainer_kwargs)
+    except TypeError:
+        trainer = WeightedTrainer(tokenizer=tok, **trainer_kwargs)
     trainer.train()
     trainer.save_model(str(out_dir))
     tok.save_pretrained(str(out_dir))
