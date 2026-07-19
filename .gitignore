@@ -8,5 +8,8 @@ data/interim/
 *.bin
 runs/
 checkpoints/
+results/best/
+results/*.log
+data/raw/
 .env
 *.ipynb_checkpoints/
