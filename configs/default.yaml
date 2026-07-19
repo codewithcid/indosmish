@@ -38,6 +38,12 @@ sources:
 codemix_spam:
   from_english_spam: 200
 
+# Corpus balancing (applied in build_corpus after merge). Prevents redundant English
+# ham from swamping the minority classes. All native-script (code-mixed) ham is kept;
+# roman ham is sampled down to reach max_ham. null = keep everything.
+balance:
+  max_ham: 3000
+
 split:
   train: 0.70
   val: 0.15

@@ -95,11 +95,31 @@ def load_source(name: str, spec: dict) -> pd.DataFrame:
     return out
 
 
+def _balance_ham(df: pd.DataFrame, max_ham: int, seed: int) -> pd.DataFrame:
+    """Cap ham, keeping ALL native-script (code-mixed) ham; sample roman ham to fill."""
+    ham = df[df["label"] == "ham"]
+    rest = df[df["label"] != "ham"]
+    if len(ham) <= max_ham:
+        return df
+    native_ham = ham[ham["script"] == "native"]
+    roman_ham = ham[ham["script"] == "roman"]
+    keep_roman = max(0, max_ham - len(native_ham))
+    roman_sample = roman_ham.sample(n=min(keep_roman, len(roman_ham)), random_state=seed)
+    balanced = pd.concat([rest, native_ham, roman_sample], ignore_index=True)
+    print(f"  balanced ham: kept {len(native_ham)} native + {len(roman_sample)} roman "
+          f"(capped at {max_ham})")
+    return balanced
+
+
 def main() -> None:
     cfg = load_config()
     frames = [load_source(name, spec) for name, spec in cfg["sources"].items()]
     unified = pd.concat(frames, ignore_index=True)
     unified = unified[unified["label"].isin(LABELS)].drop_duplicates(subset=["id"])
+
+    max_ham = cfg.get("balance", {}).get("max_ham")
+    if max_ham:
+        unified = _balance_ham(unified, max_ham, cfg["seed"])
 
     out_dir = resolve(cfg["paths"]["interim"])
     out_dir.mkdir(parents=True, exist_ok=True)
