@@ -20,18 +20,27 @@ def fabricate():
     ham = [f"see you at {h} pm bro" for h in range(1, 40)]
     spam = [f"MEGA SALE {n}% off visit store now" for n in range(1, 40)]
     smish = [f"account blocked click http://bit.ly/a{n} to verify now" for n in range(1, 40)]
-    ml = ["ningal 25 lakh won link click cheyyu http://x.co/p",
-          "bank kyc expired verify cheyyu illenkil block"]
 
-    rows = ([{"Message": t, "Label": "ham"} for t in ham]
-            + [{"Message": t, "Label": "spam"} for t in spam])
-    pd.DataFrame(rows).to_csv(raw / "dravidian_spam.csv", index=False)
+    # Mishra & Soni tri-class (TEXT/LABEL)
+    rows = ([{"TEXT": t, "LABEL": "ham"} for t in ham]
+            + [{"TEXT": t, "LABEL": "spam"} for t in spam]
+            + [{"TEXT": t, "LABEL": "smishing"} for t in smish])
+    pd.DataFrame(rows).to_csv(raw / "sms_phishing.csv", index=False)
 
-    rows2 = ([{"TEXT": t, "LABEL": "ham"} for t in ham[:20]]
-             + [{"TEXT": t, "LABEL": "spam"} for t in spam[:20]]
-             + [{"TEXT": t, "LABEL": "smishing"} for t in smish]
-             + [{"TEXT": t, "LABEL": "smishing"} for t in ml])
-    pd.DataFrame(rows2).to_csv(raw / "sms_phishing.csv", index=False)
+    # UCI SMS (text/label, English ham/spam)
+    pd.DataFrame(
+        [{"text": t, "label": "ham"} for t in ham[:15]]
+        + [{"text": t, "label": "spam"} for t in spam[:15]]
+    ).to_csv(raw / "uci_sms.csv", index=False)
+
+    # DravidianCodeMix codemix_ham (text/label) — native-script Not_offensive -> ham
+    ml_native = [f"ente veedu {n} manikku adakkam aanu, vaa" for n in range(1, 20)]
+    # add Malayalam-script char so detect_script() sees 'native'
+    ml_native = [t + " ✅ മലയാളം" for t in ml_native]
+    pd.DataFrame(
+        [{"text": t, "label": "Not_offensive"} for t in ml_native]
+        + [{"text": "off topic english only", "label": "Offensive_Untargeted"}]
+    ).to_csv(raw / "dravidian_codemix_ml.csv", index=False)
 
 
 def run(mod):

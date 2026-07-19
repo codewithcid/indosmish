@@ -13,17 +13,30 @@ labels:
   spam: 1
   smishing: 2
 
-# Column mappings for raw source files (adjust after inspecting actual downloads)
+# Column mappings for raw source files (adjust after inspecting actual downloads).
+# kind: tri_class  -> generic ham/spam/smishing loader
+# kind: codemix_ham -> DravidianCodeMix; only Not_offensive rows, mapped to ham
 sources:
-  dravidian_spam:                      # Ramanujam & Abirami, IEEE DataPort
-    file: data/raw/dravidian_spam.csv
-    text_col: Message
-    label_col: Label                   # expects values like spam/ham
-    lang: ml                           # filter to Malayalam rows in build_corpus
-  sms_phishing:                        # Mishra & Soni tri-class, Mendeley
+  sms_phishing:                        # Mishra & Soni tri-class, Mendeley (REQUIRED)
+    kind: tri_class
     file: data/raw/sms_phishing.csv
     text_col: TEXT
     label_col: LABEL                   # ham/spam/smishing
+  uci_sms:                             # UCI SMS Spam Collection (auto-fetched)
+    kind: tri_class
+    file: data/raw/uci_sms.csv
+    text_col: text
+    label_col: label                   # ham/spam
+  dravidian_codemix:                   # DravidianCodeMix Ml-En (auto-fetched)
+    kind: codemix_ham
+    file: data/raw/dravidian_codemix_ml.csv
+    text_col: text
+    label_col: label                   # Not_offensive -> ham
+    max_ham: 1500                       # cap real code-mixed ham to keep balance
+
+# How much English spam to Gemini-transform into code-mix (register balance). 0 = off.
+codemix_spam:
+  from_english_spam: 200
 
 split:
   train: 0.70

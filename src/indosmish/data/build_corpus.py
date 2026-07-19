@@ -38,6 +38,21 @@ def _norm_label(raw: str) -> str | None:
     return None
 
 
+# DravidianCodeMix labels that denote normal (non-offensive) text -> ham candidates.
+_NOT_OFFENSIVE = {"not_offensive", "not-malayalam"}
+
+
+def _mk_row(text: str, label: str, source: str) -> dict:
+    return {
+        "id": _hash_id(text, source),
+        "text": text,
+        "label": label,
+        "script": detect_script(text),
+        "source": source,
+        "synthetic": False,
+    }
+
+
 def load_source(name: str, spec: dict) -> pd.DataFrame:
     path = resolve(spec["file"])
     if not path.exists():
@@ -52,24 +67,31 @@ def load_source(name: str, spec: dict) -> pd.DataFrame:
             f"found {list(df.columns)}. Fix configs/default.yaml."
         )
 
+    kind = spec.get("kind", "tri_class")
     rows = []
-    for _, r in df.iterrows():
-        text = normalize_text(r[text_col])
-        label = _norm_label(r[label_col])
-        if not text or label is None:
-            continue
-        rows.append(
-            {
-                "id": _hash_id(text, name),
-                "text": text,
-                "label": label,
-                "script": detect_script(text),
-                "source": name,
-                "synthetic": False,
-            }
-        )
+    if kind == "codemix_ham":
+        # Keep only non-offensive, code-mixed (native-script present) rows as ham.
+        for _, r in df.iterrows():
+            text = normalize_text(r[text_col])
+            raw_label = str(r[label_col]).strip().lower()
+            if not text or raw_label not in _NOT_OFFENSIVE:
+                continue
+            if detect_script(text) != "native":  # want genuine Malayalam-script code-mix
+                continue
+            rows.append(_mk_row(text, "ham", name))
+        cap = spec.get("max_ham")
+        if cap and len(rows) > cap:
+            rows = rows[:cap]
+    else:  # tri_class
+        for _, r in df.iterrows():
+            text = normalize_text(r[text_col])
+            label = _norm_label(r[label_col])
+            if not text or label is None:
+                continue
+            rows.append(_mk_row(text, label, name))
+
     out = pd.DataFrame(rows, columns=COLUMNS)
-    print(f"  [ok]   {name}: {len(out)} rows  {out['label'].value_counts().to_dict()}")
+    print(f"  [ok]   {name} ({kind}): {len(out)} rows  {out['label'].value_counts().to_dict()}")
     return out
 
 
