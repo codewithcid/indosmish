@@ -50,9 +50,10 @@ split:
   test: 0.15
 
 augment:
-  model: gemini-2.0-flash              # free tier
+  model: gemini-flash-latest           # free tier (verified working on this key)
   per_seed: 3                          # variants per seed smishing message
-  max_seeds: 400
+  max_seeds: 250
+  rpm_sleep: 4.0                       # seconds between calls (free-tier RPM guard)
   out: data/interim/augmented_pending_review.jsonl
 
 encoder:
