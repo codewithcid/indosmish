@@ -85,7 +85,8 @@
   button.primary:disabled { opacity: 0.5; cursor: default; }
   .hint { color: var(--muted); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 7px; }
   .hint svg { width: 13px; height: 13px; }
-  .examples { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 20px; }
+  .examples-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; margin-top: 24px; margin-bottom: 11px; }
+  .examples { display: flex; gap: 9px; flex-wrap: wrap; }
   .chip {
     background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 8px;
     padding: 7px 13px; font-size: 0.82rem; color: var(--muted); cursor: pointer;
@@ -162,6 +163,7 @@
       <div class="track"><div class="fill" id="loaderBar"></div></div>
     </div>
 
+    <div class="examples-label">Try an example</div>
     <div class="examples" id="examples"></div>
 
     <div class="result" id="result">
