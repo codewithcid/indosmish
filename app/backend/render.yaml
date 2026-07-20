@@ -1,0 +1,18 @@
+# Render Blueprint — deploy the IndoSmish API on the free tier.
+# In Render: New -> Blueprint -> point at this repo. Or create a Web Service manually
+# with the settings below (root directory = app/backend).
+services:
+  - type: web
+    name: indosmish-api
+    runtime: python
+    rootDir: app/backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MODEL_REPO
+        value: ""          # set to your HF repo id, e.g. codewithcid/indosmish-indicbert-onnx
+      - key: ALLOW_ORIGIN
+        value: "*"         # set to your Vercel URL once deployed, e.g. https://indosmish.vercel.app
+      - key: PYTHON_VERSION
+        value: "3.11"
