@@ -83,6 +83,10 @@ def _load():
     so.inter_op_num_threads = 1
     so.enable_cpu_mem_arena = False      # big RSS saving on 512MB tiers
     so.enable_mem_pattern = False
+    # Skip graph optimization: it builds a second in-memory copy of the model during
+    # session init, which spikes RSS over 512MB on free tiers. Inference is unaffected
+    # for our tiny inputs.
+    so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
     _sess = ort.InferenceSession(str(mdir / "model.onnx"), sess_options=so,
                                  providers=["CPUExecutionProvider"])
     _input_names = {i.name for i in _sess.get_inputs()}
