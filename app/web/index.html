@@ -4,120 +4,203 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>IndoSmish — Code-Mixed Smishing Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #0b0f17; --card: #141b2b; --card2: #1b2437; --line: #26314a;
-    --text: #e7ecf5; --muted: #93a1bd; --accent: #6ea8fe;
-    --ham: #35c68a; --spam: #f2b53d; --smish: #ef5a6f;
+    --bg: #070a12;
+    --card: rgba(22, 29, 46, 0.62);
+    --card-solid: #131a2b;
+    --line: rgba(120, 140, 180, 0.18);
+    --text: #eef2fb;
+    --muted: #9aa8c6;
+    --accent: #7c9cff;
+    --accent2: #c78bff;
+    --ham: #35d6a0;
+    --spam: #ffc24b;
+    --smish: #ff5d78;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
   body {
-    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: radial-gradient(1200px 600px at 50% -10%, #16203a 0%, var(--bg) 55%);
-    color: var(--text); min-height: 100vh; line-height: 1.5;
+    margin: 0; color: var(--text); min-height: 100vh; overflow-x: hidden;
+    font-family: "Inter", system-ui, sans-serif; line-height: 1.55;
+    background: var(--bg);
   }
-  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
-  header { text-align: center; margin-bottom: 24px; }
-  h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.02em; }
-  h1 .dot { color: var(--accent); }
-  .tag { color: var(--muted); font-size: 0.98rem; }
+  /* animated aurora background */
+  .aurora { position: fixed; inset: 0; z-index: -2; overflow: hidden; }
+  .aurora::before, .aurora::after {
+    content: ""; position: absolute; width: 60vw; height: 60vw; border-radius: 50%;
+    filter: blur(90px); opacity: 0.5;
+  }
+  .aurora::before {
+    background: radial-gradient(circle, #4460ff, transparent 60%);
+    top: -20vw; left: -10vw; animation: float1 18s ease-in-out infinite;
+  }
+  .aurora::after {
+    background: radial-gradient(circle, #b14bff, transparent 60%);
+    top: -10vw; right: -15vw; animation: float2 22s ease-in-out infinite;
+  }
+  .grid-overlay {
+    position: fixed; inset: 0; z-index: -1;
+    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 46px 46px; mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+  }
+  @keyframes float1 { 50% { transform: translate(6vw, 8vw) scale(1.15); } }
+  @keyframes float2 { 50% { transform: translate(-8vw, 10vw) scale(1.1); } }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 56px 20px 70px; }
+  header { text-align: center; margin-bottom: 30px; }
+  .logo {
+    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    font-family: "Space Grotesk"; font-weight: 700; font-size: 2.4rem; letter-spacing: -0.03em;
+  }
+  .logo .mark {
+    display: grid; place-items: center; width: 46px; height: 46px; border-radius: 13px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 8px 30px rgba(124, 156, 255, 0.45); font-size: 1.4rem;
+  }
+  .logo .grad {
+    background: linear-gradient(120deg, #fff 20%, var(--accent) 60%, var(--accent2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tag { color: var(--muted); font-size: 1.02rem; max-width: 520px; margin: 0 auto; }
   .privacy-pill {
-    display: inline-block; margin-top: 10px; font-size: 0.78rem; color: var(--ham);
-    background: rgba(53,198,138,0.12); border: 1px solid var(--ham); border-radius: 999px;
-    padding: 4px 12px;
+    display: inline-flex; align-items: center; gap: 7px; margin-top: 16px; font-size: 0.8rem;
+    color: var(--ham); background: rgba(53, 214, 160, 0.1); border: 1px solid rgba(53,214,160,0.35);
+    border-radius: 999px; padding: 6px 14px; font-weight: 500;
   }
   .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
-    padding: 22px; box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+    background: var(--card); backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid var(--line); border-radius: 22px; padding: 26px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
   }
+  .field-label { font-size: 0.82rem; color: var(--muted); font-weight: 500; margin-bottom: 8px; display: block; }
   textarea {
-    width: 100%; min-height: 92px; resize: vertical; background: var(--card2);
-    border: 1px solid var(--line); border-radius: 10px; color: var(--text);
-    padding: 12px 14px; font-size: 1rem; font-family: inherit;
+    width: 100%; min-height: 96px; resize: vertical; color: var(--text);
+    background: rgba(10, 14, 24, 0.6); border: 1px solid var(--line); border-radius: 14px;
+    padding: 14px 16px; font-size: 1.02rem; font-family: inherit; transition: border 0.2s, box-shadow 0.2s;
   }
-  textarea:focus { outline: none; border-color: var(--accent); }
-  .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-  button {
-    background: var(--accent); color: #06122b; border: 0; border-radius: 10px;
-    padding: 11px 20px; font-size: 1rem; font-weight: 650; cursor: pointer;
+  textarea::placeholder { color: #5f6d8a; }
+  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(124,156,255,0.14); }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
+  button.primary {
+    position: relative; border: 0; border-radius: 13px; padding: 13px 26px; cursor: pointer;
+    font-family: "Space Grotesk"; font-weight: 600; font-size: 1rem; color: #050a1a;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    box-shadow: 0 10px 30px rgba(124,156,255,0.35); transition: transform 0.15s, box-shadow 0.2s;
   }
-  button:disabled { opacity: 0.55; cursor: default; }
-  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  button.primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(124,156,255,0.5); }
+  button.primary:active:not(:disabled) { transform: translateY(0); }
+  button.primary:disabled { opacity: 0.55; cursor: default; }
+  .hint { color: var(--muted); font-size: 0.86rem; }
+  .examples { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 18px; }
   .chip {
-    background: var(--card2); border: 1px solid var(--line); border-radius: 999px;
-    padding: 6px 12px; font-size: 0.82rem; color: var(--muted); cursor: pointer;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 14px; font-size: 0.82rem; color: var(--muted); cursor: pointer;
+    transition: all 0.18s; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
   }
-  .chip:hover { border-color: var(--accent); color: var(--text); }
-  .loader { margin-top: 16px; }
-  .loader .bar-track { height: 8px; background: var(--card2); border-radius: 6px; overflow: hidden; }
-  .loader .bar-fill { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
-  .loader .lbl { font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
-  .result { margin-top: 20px; display: none; }
-  .verdict { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
-  .badge { padding: 4px 14px; border-radius: 999px; font-size: 0.95rem; letter-spacing: 0.03em; }
-  .b-ham { background: rgba(53,198,138,0.15); color: var(--ham); border: 1px solid var(--ham); }
-  .b-spam { background: rgba(242,181,61,0.15); color: var(--spam); border: 1px solid var(--spam); }
-  .b-smishing { background: rgba(239,90,111,0.15); color: var(--smish); border: 1px solid var(--smish); }
-  .bar-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
-  .bar-label { width: 74px; font-size: 0.85rem; color: var(--muted); text-transform: capitalize; }
-  .bar-track { flex: 1; height: 10px; background: var(--card2); border-radius: 6px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
-  .bar-val { width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.85rem; }
-  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-  .cue { background: rgba(110,168,254,0.12); border: 1px solid var(--accent); color: var(--accent);
-         border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; }
-  .latency { color: var(--muted); font-size: 0.85rem; margin-top: 12px; }
+  .chip:hover { border-color: var(--accent); color: var(--text); background: rgba(124,156,255,0.1); transform: translateY(-1px); }
+
+  /* loader */
+  .loader { margin-top: 18px; }
+  .loader .lbl { font-size: 0.82rem; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .loader .track { height: 7px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; }
+  .loader .fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.35s ease; box-shadow: 0 0 12px rgba(124,156,255,0.6); }
+
+  /* result */
+  .result { margin-top: 22px; opacity: 0; transform: translateY(10px); transition: opacity 0.45s, transform 0.45s; }
+  .result.show { opacity: 1; transform: none; }
+  .result-card { border-radius: 18px; padding: 22px; border: 1px solid var(--line); background: rgba(10,14,24,0.5); position: relative; overflow: hidden; }
+  .result-card::before { content: ""; position: absolute; inset: 0; opacity: 0.12; pointer-events: none; }
+  .result-card.r-ham::before { background: radial-gradient(120% 80% at 50% 0, var(--ham), transparent 70%); }
+  .result-card.r-spam::before { background: radial-gradient(120% 80% at 50% 0, var(--spam), transparent 70%); }
+  .result-card.r-smishing::before { background: radial-gradient(120% 80% at 50% 0, var(--smish), transparent 70%); }
+  .verdict { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .verdict .emoji { font-size: 2rem; }
+  .verdict .txt small { display: block; color: var(--muted); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+  .verdict .txt .name { font-family: "Space Grotesk"; font-weight: 700; font-size: 1.7rem; line-height: 1.1; }
+  .n-ham { color: var(--ham); } .n-spam { color: var(--spam); } .n-smishing { color: var(--smish); }
+  .bar-row { display: flex; align-items: center; gap: 14px; margin: 11px 0; }
+  .bar-label { width: 78px; font-size: 0.86rem; color: var(--muted); text-transform: capitalize; }
+  .bar-track { flex: 1; height: 11px; background: rgba(255,255,255,0.06); border-radius: 7px; overflow: hidden; }
+  .bar-fill { height: 100%; width: 0; border-radius: 7px; transition: width 0.7s cubic-bezier(.2,.8,.2,1); }
+  .bar-val { width: 46px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.86rem; font-weight: 600; }
+  .meta { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 18px; }
+  .cue { display: inline-flex; align-items: center; gap: 5px; background: rgba(124,156,255,0.12); border: 1px solid rgba(124,156,255,0.4); color: var(--accent); border-radius: 999px; padding: 5px 13px; font-size: 0.78rem; font-weight: 500; }
+  .latency { color: var(--muted); font-size: 0.84rem; margin-top: 16px; display: flex; align-items: center; gap: 6px; }
   .latency b { color: var(--text); }
-  footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; line-height: 1.7; }
+  footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 36px; line-height: 1.8; }
   footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.25); border-top-color: var(--accent); border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
+<div class="aurora"></div>
+<div class="grid-overlay"></div>
+
 <div class="wrap">
   <header>
-    <h1>IndoSmish<span class="dot">.</span></h1>
-    <div class="tag">Tri-class <b>ham / spam / smishing</b> detection for code-mixed Malayalam–English SMS</div>
-    <div class="privacy-pill">🔒 Runs entirely in your browser — your message never leaves your device</div>
+    <div class="logo"><span class="mark">🛡️</span><span class="grad">IndoSmish</span></div>
+    <div class="tag">Tri-class <b>ham · spam · smishing</b> detection for code-mixed Malayalam–English SMS, running fully on-device.</div>
+    <div class="privacy-pill">🔒 Your message never leaves your browser</div>
   </header>
 
   <div class="card">
-    <textarea id="input" placeholder="Paste an SMS — English or Romanized Malayalam–English, e.g. 'ningalude account block aayi, ee link click cheyyu'"></textarea>
+    <label class="field-label" for="input">SMS message</label>
+    <textarea id="input" placeholder="Paste a message — English or Romanized Malayalam–English, e.g. “ningalude account block aayi, ee link click cheyyu”"></textarea>
     <div class="row">
-      <button id="go" disabled>Loading model…</button>
-      <span class="latency" id="status">Downloading the detector (~130 MB, one-time, then cached)…</span>
+      <button class="primary" id="go" disabled><span id="goText">Loading model…</span></button>
+      <span class="hint" id="status"><span class="spinner"></span> Downloading detector (~130 MB, one-time)…</span>
     </div>
+
     <div class="loader" id="loader">
-      <div class="lbl" id="loaderLbl">Preparing…</div>
-      <div class="bar-track"><div class="bar-fill" id="loaderBar"></div></div>
+      <div class="lbl"><span id="loaderLbl">Preparing…</span><span id="loaderPct">0%</span></div>
+      <div class="track"><div class="fill" id="loaderBar"></div></div>
     </div>
+
     <div class="examples" id="examples"></div>
 
     <div class="result" id="result">
-      <div class="verdict"><span>Verdict:</span><span class="badge" id="badge"></span></div>
-      <div id="bars"></div>
-      <div class="meta" id="cues"></div>
-      <div class="latency" id="latency"></div>
+      <div class="result-card" id="resultCard">
+        <div class="verdict">
+          <span class="emoji" id="vEmoji"></span>
+          <span class="txt"><small id="vSub">Verdict</small><span class="name" id="vName"></span></span>
+        </div>
+        <div id="bars"></div>
+        <div class="meta" id="cues"></div>
+        <div class="latency" id="latency"></div>
+      </div>
     </div>
   </div>
 
   <footer>
-    Implements the on-device benchmark from <i>“From SMS Spam Filters to Quantized LLMs”</i> (IEEE Access 2026).<br />
-    Fine-tuned IndicBERT · ONNX · in-browser inference via 🤗 transformers.js · zero server, full privacy.
+    Implements the on-device benchmark from <i>“From SMS Spam Filters to Quantized LLMs”</i> · IEEE Access 2026.<br />
+    Fine-tuned <b>IndicBERT</b> → ONNX · in-browser inference via 🤗 <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a> · zero server, full privacy.
   </footer>
 </div>
 
 <script type="module">
   import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
-  env.allowLocalModels = false;              // load from HF Hub
+  env.allowLocalModels = false;
   env.backends.onnx.wasm.numThreads = 1;
 
   const MODEL = "cidcodes/indosmish-indicbert-onnx";
   const LABELS = ["ham", "spam", "smishing"];
-  const COLORS = { ham: "#35c68a", spam: "#f2b53d", smishing: "#ef5a6f" };
+  const META = {
+    ham: { color: "#35d6a0", emoji: "✅", sub: "Looks legitimate" },
+    spam: { color: "#ffc24b", emoji: "📢", sub: "Bulk / promotional" },
+    smishing: { color: "#ff5d78", emoji: "🎣", sub: "Likely fraud — do not act on it" },
+  };
   const CUES = {
     urgency: ["urgent","immediately","expire","block","suspend","24 hour","24hr","last chance","udane","innu","rathri"],
     authority: ["bank","kyc","account","govt","police","rbi","office","customer care","verify","pan"],
-    "reward/scarcity": ["win","won","prize","lottery","free","reward","offer","gift","cashback","labhich","kittum","award"],
+    "reward / scarcity": ["win","won","prize","lottery","free","reward","offer","gift","cashback","labhich","kittum","award"],
     "action vector": ["click","link","http","bit.ly","call","cheyyu","vilikk","otp","upi","claim"],
   };
   const $ = (id) => document.getElementById(id);
@@ -130,7 +213,7 @@
   ];
   EXAMPLES.forEach((t) => {
     const c = document.createElement("span");
-    c.className = "chip"; c.textContent = t.length > 46 ? t.slice(0,44)+"…" : t;
+    c.className = "chip"; c.textContent = t.length > 42 ? t.slice(0,40)+"…" : t;
     c.title = t; c.onclick = () => { $("input").value = t; classify(); };
     $("examples").appendChild(c);
   });
@@ -141,22 +224,23 @@
     if (p.status === "progress" && p.file && p.total) {
       progress[p.file] = p.loaded / p.total;
       const main = Object.entries(progress).find(([f]) => f.includes("model.onnx"));
-      const frac = main ? main[1] : Math.max(0, ...Object.values(progress), 0);
-      $("loaderBar").style.width = (frac * 100).toFixed(0) + "%";
-      $("loaderLbl").textContent = `Downloading model… ${(frac * 100).toFixed(0)}%`;
-    } else if (p.status === "done") {
-      $("loaderLbl").textContent = "Finalizing…";
-    }
+      const frac = main ? main[1] : Math.max(0, ...Object.values(progress));
+      const pct = Math.min(99, frac * 100);
+      $("loaderBar").style.width = pct + "%";
+      $("loaderPct").textContent = pct.toFixed(0) + "%";
+      $("loaderLbl").textContent = "Downloading model";
+    } else if (p.status === "done") { $("loaderLbl").textContent = "Finalizing"; }
   }
 
   (async () => {
     try {
       classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", progress_callback: onProgress });
-      $("loader").style.display = "none";
-      $("go").disabled = false; $("go").textContent = "Classify";
-      $("status").textContent = "Model ready · runs on-device";
+      $("loaderBar").style.width = "100%"; $("loaderPct").textContent = "100%";
+      setTimeout(() => { $("loader").style.display = "none"; }, 400);
+      $("go").disabled = false; $("goText").textContent = "Classify";
+      $("status").innerHTML = "✓ Model ready · runs on-device";
     } catch (e) {
-      $("status").textContent = "Failed to load model: " + e.message;
+      $("status").innerHTML = "⚠ Failed to load model: " + e.message;
     }
   })();
 
@@ -168,33 +252,40 @@
   async function classify() {
     const text = $("input").value.trim();
     if (!text || !classifier) return;
-    $("go").disabled = true;
+    $("go").disabled = true; $("goText").innerHTML = '<span class="spinner"></span>';
     const t0 = performance.now();
     const out = await classifier(text, { top_k: 3 });
     const latency = performance.now() - t0;
-    $("go").disabled = false;
+    $("go").disabled = false; $("goText").textContent = "Classify";
 
     const probs = {}; out.forEach((o) => { probs[o.label] = o.score; });
-    const top = out[0].label;
-    render(top, probs, findCues(text), latency);
+    render(out[0].label, probs, findCues(text), latency);
   }
 
   function render(top, probs, cues, latency) {
-    $("result").style.display = "block";
-    const badge = $("badge");
-    badge.textContent = top.toUpperCase(); badge.className = "badge b-" + top;
+    const m = META[top];
+    $("resultCard").className = "result-card r-" + top;
+    $("vEmoji").textContent = m.emoji;
+    $("vSub").textContent = m.sub;
+    $("vName").textContent = top.toUpperCase();
+    $("vName").className = "name n-" + top;
+
     const bars = $("bars"); bars.innerHTML = "";
     LABELS.forEach((lbl) => {
       const p = (probs[lbl] || 0) * 100;
       const row = document.createElement("div"); row.className = "bar-row";
       row.innerHTML = `<div class="bar-label">${lbl}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${COLORS[lbl]}"></div></div>
-        <div class="bar-val">${p.toFixed(0)}%</div>`;
+        <div class="bar-track"><div class="bar-fill" style="background:${META[lbl].color}"></div></div>
+        <div class="bar-val" style="color:${META[lbl].color}">${p.toFixed(0)}%</div>`;
       bars.appendChild(row);
+      requestAnimationFrame(() => { row.querySelector(".bar-fill").style.width = p + "%"; });
     });
+
     const cueBox = $("cues"); cueBox.innerHTML = "";
-    cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = c; cueBox.appendChild(s); });
-    $("latency").innerHTML = `⚡ <b>${latency.toFixed(0)} ms</b> · IndicBERT (fp32) · classified on-device in your browser`;
+    cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = "⚑ " + c; cueBox.appendChild(s); });
+
+    $("latency").innerHTML = `⚡ <b>${latency.toFixed(0)} ms</b> · IndicBERT · classified on-device in your browser`;
+    $("result").classList.add("show");
   }
 
   $("go").onclick = classify;
