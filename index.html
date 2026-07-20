@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IndoSmish — Code-Mixed Smishing Detector</title>
+<style>
+  :root {
+    --bg: #0b0f17; --card: #141b2b; --card2: #1b2437; --line: #26314a;
+    --text: #e7ecf5; --muted: #93a1bd; --accent: #6ea8fe;
+    --ham: #35c68a; --spam: #f2b53d; --smish: #ef5a6f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #16203a 0%, var(--bg) 55%);
+    color: var(--text); min-height: 100vh; line-height: 1.5;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
+  header { text-align: center; margin-bottom: 24px; }
+  h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.02em; }
+  h1 .dot { color: var(--accent); }
+  .tag { color: var(--muted); font-size: 0.98rem; }
+  .privacy-pill {
+    display: inline-block; margin-top: 10px; font-size: 0.78rem; color: var(--ham);
+    background: rgba(53,198,138,0.12); border: 1px solid var(--ham); border-radius: 999px;
+    padding: 4px 12px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    padding: 22px; box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  }
+  textarea {
+    width: 100%; min-height: 92px; resize: vertical; background: var(--card2);
+    border: 1px solid var(--line); border-radius: 10px; color: var(--text);
+    padding: 12px 14px; font-size: 1rem; font-family: inherit;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+  button {
+    background: var(--accent); color: #06122b; border: 0; border-radius: 10px;
+    padding: 11px 20px; font-size: 1rem; font-weight: 650; cursor: pointer;
+  }
+  button:disabled { opacity: 0.55; cursor: default; }
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .chip {
+    background: var(--card2); border: 1px solid var(--line); border-radius: 999px;
+    padding: 6px 12px; font-size: 0.82rem; color: var(--muted); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text); }
+  .loader { margin-top: 16px; }
+  .loader .bar-track { height: 8px; background: var(--card2); border-radius: 6px; overflow: hidden; }
+  .loader .bar-fill { height: 100%; width: 0; background: var(--accent); transition: width 0.3s; }
+  .loader .lbl { font-size: 0.82rem; color: var(--muted); margin-bottom: 6px; }
+  .result { margin-top: 20px; display: none; }
+  .verdict { display: flex; align-items: center; gap: 12px; font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
+  .badge { padding: 4px 14px; border-radius: 999px; font-size: 0.95rem; letter-spacing: 0.03em; }
+  .b-ham { background: rgba(53,198,138,0.15); color: var(--ham); border: 1px solid var(--ham); }
+  .b-spam { background: rgba(242,181,61,0.15); color: var(--spam); border: 1px solid var(--spam); }
+  .b-smishing { background: rgba(239,90,111,0.15); color: var(--smish); border: 1px solid var(--smish); }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+  .bar-label { width: 74px; font-size: 0.85rem; color: var(--muted); text-transform: capitalize; }
+  .bar-track { flex: 1; height: 10px; background: var(--card2); border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+  .bar-val { width: 48px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.85rem; }
+  .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .cue { background: rgba(110,168,254,0.12); border: 1px solid var(--accent); color: var(--accent);
+         border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; }
+  .latency { color: var(--muted); font-size: 0.85rem; margin-top: 12px; }
+  .latency b { color: var(--text); }
+  footer { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 30px; line-height: 1.7; }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>IndoSmish<span class="dot">.</span></h1>
+    <div class="tag">Tri-class <b>ham / spam / smishing</b> detection for code-mixed Malayalam–English SMS</div>
+    <div class="privacy-pill">🔒 Runs entirely in your browser — your message never leaves your device</div>
+  </header>
+
+  <div class="card">
+    <textarea id="input" placeholder="Paste an SMS — English or Romanized Malayalam–English, e.g. 'ningalude account block aayi, ee link click cheyyu'"></textarea>
+    <div class="row">
+      <button id="go" disabled>Loading model…</button>
+      <span class="latency" id="status">Downloading the detector (~130 MB, one-time, then cached)…</span>
+    </div>
+    <div class="loader" id="loader">
+      <div class="lbl" id="loaderLbl">Preparing…</div>
+      <div class="bar-track"><div class="bar-fill" id="loaderBar"></div></div>
+    </div>
+    <div class="examples" id="examples"></div>
+
+    <div class="result" id="result">
+      <div class="verdict"><span>Verdict:</span><span class="badge" id="badge"></span></div>
+      <div id="bars"></div>
+      <div class="meta" id="cues"></div>
+      <div class="latency" id="latency"></div>
+    </div>
+  </div>
+
+  <footer>
+    Implements the on-device benchmark from <i>“From SMS Spam Filters to Quantized LLMs”</i> (IEEE Access 2026).<br />
+    Fine-tuned IndicBERT · ONNX · in-browser inference via 🤗 transformers.js · zero server, full privacy.
+  </footer>
+</div>
+
+<script type="module">
+  import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+  env.allowLocalModels = false;              // load from HF Hub
+  env.backends.onnx.wasm.numThreads = 1;
+
+  const MODEL = "cidcodes/indosmish-indicbert-onnx";
+  const LABELS = ["ham", "spam", "smishing"];
+  const COLORS = { ham: "#35c68a", spam: "#f2b53d", smishing: "#ef5a6f" };
+  const CUES = {
+    urgency: ["urgent","immediately","expire","block","suspend","24 hour","24hr","last chance","udane","innu","rathri"],
+    authority: ["bank","kyc","account","govt","police","rbi","office","customer care","verify","pan"],
+    "reward/scarcity": ["win","won","prize","lottery","free","reward","offer","gift","cashback","labhich","kittum","award"],
+    "action vector": ["click","link","http","bit.ly","call","cheyyu","vilikk","otp","upi","claim"],
+  };
+  const $ = (id) => document.getElementById(id);
+
+  const EXAMPLES = [
+    "Hey da, reaching home by 8, dinner undo?",
+    "Ningalude SBI account block aayi, ee link click cheyyu http://bit.ly/x3k KYC update cheyyan",
+    "Congratulations! Ningalkku 25 lakh prize labhichu. Claim cheyyan call 98765XXXXX",
+    "FLAT 50% OFF this weekend only! Visit our store now",
+  ];
+  EXAMPLES.forEach((t) => {
+    const c = document.createElement("span");
+    c.className = "chip"; c.textContent = t.length > 46 ? t.slice(0,44)+"…" : t;
+    c.title = t; c.onclick = () => { $("input").value = t; classify(); };
+    $("examples").appendChild(c);
+  });
+
+  let classifier = null;
+  const progress = {};
+  function onProgress(p) {
+    if (p.status === "progress" && p.file && p.total) {
+      progress[p.file] = p.loaded / p.total;
+      const main = Object.entries(progress).find(([f]) => f.includes("model.onnx"));
+      const frac = main ? main[1] : Math.max(0, ...Object.values(progress), 0);
+      $("loaderBar").style.width = (frac * 100).toFixed(0) + "%";
+      $("loaderLbl").textContent = `Downloading model… ${(frac * 100).toFixed(0)}%`;
+    } else if (p.status === "done") {
+      $("loaderLbl").textContent = "Finalizing…";
+    }
+  }
+
+  (async () => {
+    try {
+      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", progress_callback: onProgress });
+      $("loader").style.display = "none";
+      $("go").disabled = false; $("go").textContent = "Classify";
+      $("status").textContent = "Model ready · runs on-device";
+    } catch (e) {
+      $("status").textContent = "Failed to load model: " + e.message;
+    }
+  })();
+
+  function findCues(text) {
+    const t = text.toLowerCase();
+    return Object.entries(CUES).filter(([, kws]) => kws.some((k) => t.includes(k))).map(([c]) => c);
+  }
+
+  async function classify() {
+    const text = $("input").value.trim();
+    if (!text || !classifier) return;
+    $("go").disabled = true;
+    const t0 = performance.now();
+    const out = await classifier(text, { top_k: 3 });
+    const latency = performance.now() - t0;
+    $("go").disabled = false;
+
+    const probs = {}; out.forEach((o) => { probs[o.label] = o.score; });
+    const top = out[0].label;
+    render(top, probs, findCues(text), latency);
+  }
+
+  function render(top, probs, cues, latency) {
+    $("result").style.display = "block";
+    const badge = $("badge");
+    badge.textContent = top.toUpperCase(); badge.className = "badge b-" + top;
+    const bars = $("bars"); bars.innerHTML = "";
+    LABELS.forEach((lbl) => {
+      const p = (probs[lbl] || 0) * 100;
+      const row = document.createElement("div"); row.className = "bar-row";
+      row.innerHTML = `<div class="bar-label">${lbl}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${COLORS[lbl]}"></div></div>
+        <div class="bar-val">${p.toFixed(0)}%</div>`;
+      bars.appendChild(row);
+    });
+    const cueBox = $("cues"); cueBox.innerHTML = "";
+    cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = c; cueBox.appendChild(s); });
+    $("latency").innerHTML = `⚡ <b>${latency.toFixed(0)} ms</b> · IndicBERT (fp32) · classified on-device in your browser`;
+  }
+
+  $("go").onclick = classify;
+  $("input").addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key === "Enter") classify(); });
+</script>
+</body>
+</html>
