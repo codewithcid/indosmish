@@ -81,7 +81,13 @@
     <textarea id="input" placeholder="Paste an SMS — English or Romanized Malayalam–English, e.g. 'ningalude account block aayi, ee link click cheyyu'"></textarea>
     <div class="row">
       <button id="go">Classify</button>
-      <span class="latency privacy">Runs a quantized IndicBERT on CPU · on-device-grade inference</span>
+      <span class="latency privacy">Runs a fine-tuned IndicBERT (ONNX) on CPU · on-device-grade inference</span>
+      <span class="chip" id="apiBtn" style="margin-left:auto" title="Set the model API URL">⚙ API</span>
+    </div>
+    <div id="apiBox" style="display:none; margin-top:10px;">
+      <input id="apiUrl" placeholder="https://your-service.onrender.com" style="width:100%;background:var(--card2);border:1px solid var(--line);border-radius:8px;color:var(--text);padding:9px 12px;font-size:0.9rem;" />
+      <div class="latency" style="margin-top:6px;">Paste your Render backend URL and press Save. Stored in your browser only.</div>
+      <button id="apiSave" style="margin-top:8px;padding:7px 14px;font-size:0.9rem;">Save</button>
     </div>
     <div class="examples" id="examples"></div>
 
@@ -104,8 +110,10 @@
 
 <script src="config.js"></script>
 <script>
-  // API base comes from config.js (edit that file with your Render URL after deploying).
-  const API = (window.INDOSMISH_API || "http://127.0.0.1:8000") + "/classify";
+  // API base: localStorage override (set live via the ⚙ API button) > config.js > localhost.
+  function apiBase() {
+    return (localStorage.getItem("indosmish_api") || window.INDOSMISH_API || "http://127.0.0.1:8000").replace(/\/$/, "");
+  }
 
   const EXAMPLES = [
     "Hey da, reaching home by 8, dinner undo?",
@@ -130,7 +138,7 @@
     if (!text) return;
     $("go").disabled = true; $("go").textContent = "Classifying…";
     try {
-      const r = await fetch(API, {
+      const r = await fetch(apiBase() + "/classify", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
@@ -173,6 +181,19 @@
   $("input").addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === "Enter") classify();
   });
+
+  // API URL settings (live, no redeploy needed)
+  $("apiBtn").onclick = () => {
+    const box = $("apiBox");
+    box.style.display = box.style.display === "none" ? "block" : "none";
+    $("apiUrl").value = localStorage.getItem("indosmish_api") || "";
+  };
+  $("apiSave").onclick = () => {
+    const v = $("apiUrl").value.trim();
+    if (v) localStorage.setItem("indosmish_api", v); else localStorage.removeItem("indosmish_api");
+    $("apiBox").style.display = "none";
+    $("err").textContent = "";
+  };
 </script>
 </body>
 </html>

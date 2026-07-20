@@ -1,0 +1,2 @@
+*.onnx filter=lfs diff=lfs merge=lfs -text
+app/backend/model/onnx/*.model filter=lfs diff=lfs merge=lfs -text

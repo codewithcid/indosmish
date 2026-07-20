@@ -11,6 +11,8 @@ checkpoints/
 results/best/
 results/*.log
 data/raw/
-app/backend/model/
+# Bundle only the deployable fp32 ONNX (via Git LFS); ignore the rest of model/
+app/backend/model/onnx-int8/
+app/backend/model/onnx-fp16/
 .env
 *.ipynb_checkpoints/
