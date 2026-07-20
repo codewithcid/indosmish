@@ -3,192 +3,361 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>IndoSmish — Code-Mixed Smishing Detector</title>
+<title>IndoSmish — Code-Mixed Smishing Detection</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg: #080b12;
-    --card: rgba(20, 26, 40, 0.72);
-    --line: rgba(130, 148, 186, 0.16);
-    --line-strong: rgba(130, 148, 186, 0.28);
-    --text: #eceff6;
-    --muted: #949fb8;
-    --accent: #6f8dff;
-    --ham: #2fbe8a;
-    --spam: #e6a93c;
-    --smish: #f0576f;
+    --primary: #3366ff; --primary-light: #4f8ef5; --primary-lighter: #e8f0ff; --primary-dark: #0043a9;
+    --success: #00ac69; --success-lt: #d4f2e4;
+    --warning: #f4a100; --warning-lt: #fef3d4;
+    --error: #ec4333; --error-lt: #fde4e2;
+    --info: #00cfd5;
+    --bg: #f4f6fb; --surface: #ffffff;
+    --text: #242c3a; --text-2: #5d646e; --muted: #98a2b3; --line: #e7ebf3;
+    --shadow: 0 4px 14px -4px rgba(44, 63, 102, 0.14), 0 2px 6px -2px rgba(44, 63, 102, 0.06);
+    --shadow-lg: 0 18px 44px -12px rgba(44, 63, 102, 0.22);
+    --radius: 12px;
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; color: var(--text); min-height: 100vh;
-    font-family: "Inter", system-ui, sans-serif; line-height: 1.55;
-    font-feature-settings: "cv02","cv03","cv04","ss01";
-    background:
-      radial-gradient(900px 500px at 50% -8%, rgba(80, 104, 200, 0.16), transparent 60%),
-      radial-gradient(700px 500px at 85% 10%, rgba(150, 90, 220, 0.10), transparent 55%),
-      var(--bg);
-    -webkit-font-smoothing: antialiased;
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Poppins", system-ui, sans-serif; line-height: 1.6; -webkit-font-smoothing: antialiased;
   }
-  .grid-overlay {
-    position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    background-image: linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 35%, transparent 100%);
-  }
-  .wrap { max-width: 680px; margin: 0 auto; padding: 64px 22px 72px; }
   svg { display: block; }
+  a { color: var(--primary); text-decoration: none; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .eyebrow { font-size: 0.74rem; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--primary); }
+  h2.section-title { font-size: 1.9rem; font-weight: 600; margin: 10px 0 6px; letter-spacing: -0.01em; }
+  .section-sub { color: var(--text-2); font-size: 1.02rem; max-width: 620px; }
 
-  header { text-align: center; margin-bottom: 34px; }
-  .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-  .logo .mark {
-    display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px;
-    background: linear-gradient(140deg, #6f8dff, #a678ff);
-    color: #fff; box-shadow: 0 6px 22px rgba(111, 141, 255, 0.35);
+  /* nav */
+  .nav {
+    position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--line);
   }
-  .logo .mark svg { width: 22px; height: 22px; }
-  .logo .name { font-family: "Space Grotesk"; font-weight: 600; font-size: 1.7rem; letter-spacing: -0.02em; }
-  .tag { color: var(--muted); font-size: 1.0rem; max-width: 480px; margin: 0 auto; }
-  .privacy {
-    display: inline-flex; align-items: center; gap: 7px; margin-top: 18px; font-size: 0.8rem;
-    color: var(--muted); border: 1px solid var(--line-strong); border-radius: 999px;
-    padding: 6px 14px; font-weight: 450;
-  }
-  .privacy svg { width: 13px; height: 13px; color: var(--ham); }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 66px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 1.2rem; color: var(--text); }
+  .brand .mark { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(140deg, var(--primary), #6b8cff); color: #fff; box-shadow: 0 5px 16px rgba(51,102,255,0.34); }
+  .brand .mark svg { width: 19px; height: 19px; }
+  .nav-links { display: flex; gap: 26px; align-items: center; }
+  .nav-links a { color: var(--text-2); font-size: 0.92rem; font-weight: 500; transition: color 0.15s; }
+  .nav-links a:hover { color: var(--primary); }
+  .nav-cta { background: var(--primary); color: #fff !important; padding: 8px 16px; border-radius: 9px; font-size: 0.88rem; box-shadow: 0 6px 16px rgba(51,102,255,0.28); transition: transform 0.14s; }
+  .nav-cta:hover { transform: translateY(-1px); }
+  @media (max-width: 720px) { .nav-links a:not(.nav-cta) { display: none; } }
 
-  .card {
-    background: var(--card); backdrop-filter: blur(16px) saturate(130%);
-    -webkit-backdrop-filter: blur(16px) saturate(130%);
-    border: 1px solid var(--line); border-radius: 18px; padding: 26px;
-    box-shadow: 0 18px 50px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.04);
-  }
-  .field-label { font-size: 0.8rem; color: var(--muted); font-weight: 500; margin-bottom: 9px; display: block; letter-spacing: 0.01em; }
-  textarea {
-    width: 100%; min-height: 98px; resize: vertical; color: var(--text);
-    background: rgba(8, 11, 19, 0.55); border: 1px solid var(--line-strong); border-radius: 12px;
-    padding: 14px 16px; font-size: 1.0rem; font-family: inherit; transition: border-color 0.18s, box-shadow 0.18s;
-  }
-  textarea::placeholder { color: #5c6883; }
-  textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(111,141,255,0.13); }
-  .row { display: flex; gap: 12px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
-  button.primary {
-    border: 0; border-radius: 11px; padding: 12px 26px; cursor: pointer; min-width: 116px;
-    font-family: "Space Grotesk"; font-weight: 600; font-size: 0.98rem; color: #fff;
-    background: linear-gradient(140deg, #6f8dff, #a678ff);
-    box-shadow: 0 8px 24px rgba(111,141,255,0.28); transition: transform 0.14s, box-shadow 0.2s, opacity 0.2s;
-  }
-  button.primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 30px rgba(111,141,255,0.42); }
-  button.primary:active:not(:disabled) { transform: translateY(0); }
-  button.primary:disabled { opacity: 0.5; cursor: default; }
-  .hint { color: var(--muted); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 7px; }
-  .hint svg { width: 13px; height: 13px; }
-  .examples-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; margin-top: 24px; margin-bottom: 11px; }
-  .examples { display: flex; gap: 9px; flex-wrap: wrap; }
-  .chip {
-    background: rgba(255,255,255,0.03); border: 1px solid var(--line-strong); border-radius: 8px;
-    padding: 7px 13px; font-size: 0.82rem; color: var(--muted); cursor: pointer;
-    transition: all 0.16s; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .chip:hover { border-color: var(--accent); color: var(--text); background: rgba(111,141,255,0.08); }
+  /* hero */
+  .hero { padding: 58px 0 30px; position: relative; overflow: hidden; }
+  .hero::before { content: ""; position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+    width: 900px; height: 380px; background: radial-gradient(circle, rgba(51,102,255,0.14), transparent 62%); z-index: 0; }
+  .hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 900px) { .hero-inner { grid-template-columns: 1fr; } }
+  .hero h1 { font-size: 2.9rem; font-weight: 700; line-height: 1.12; letter-spacing: -0.025em; margin: 16px 0 16px; }
+  .hero h1 .grad { background: linear-gradient(120deg, var(--primary), #7a5cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero p.lead { font-size: 1.1rem; color: var(--text-2); margin-bottom: 22px; }
+  .pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 14px; font-size: 0.82rem; font-weight: 500; color: var(--text-2); box-shadow: var(--shadow); }
+  .pill svg { width: 14px; height: 14px; color: var(--primary); }
+  .pill.green svg { color: var(--success); }
 
-  .loader { margin-top: 20px; }
-  .loader .lbl { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
-  .loader .track { height: 6px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; }
-  .loader .fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #6f8dff, #a678ff); transition: width 0.35s ease; }
+  /* card */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 
-  .result { margin-top: 22px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease, opacity 0.4s ease; }
-  .result.show { max-height: 620px; opacity: 1; }
-  .result-card { border-radius: 15px; padding: 22px; border: 1px solid var(--line-strong); background: rgba(8,11,19,0.5); position: relative; overflow: hidden; }
-  .accent-line { position: absolute; top: 0; left: 0; right: 0; height: 2px; }
-  .r-ham .accent-line { background: var(--ham); } .r-spam .accent-line { background: var(--spam); } .r-smishing .accent-line { background: var(--smish); }
-  .verdict { display: flex; align-items: center; gap: 15px; margin-bottom: 22px; }
-  .verdict .vicon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; flex: none; }
+  /* demo card */
+  .demo { padding: 24px; }
+  .demo .field-label { font-size: 0.8rem; color: var(--text-2); font-weight: 600; margin-bottom: 8px; display: block; }
+  textarea { width: 100%; min-height: 96px; resize: vertical; color: var(--text); background: #fbfcfe; border: 1.5px solid var(--line);
+    border-radius: 10px; padding: 13px 15px; font-size: 0.98rem; font-family: inherit; transition: border-color 0.16s, box-shadow 0.16s; }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(51,102,255,0.12); }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 13px; flex-wrap: wrap; }
+  button.primary { border: 0; border-radius: 10px; padding: 12px 24px; cursor: pointer; min-width: 120px;
+    font-family: inherit; font-weight: 600; font-size: 0.95rem; color: #fff; background: var(--primary);
+    box-shadow: 0 8px 20px rgba(51,102,255,0.28); transition: transform 0.14s, box-shadow 0.2s, opacity 0.2s; }
+  button.primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px rgba(51,102,255,0.4); }
+  button.primary:disabled { opacity: 0.55; cursor: default; }
+  .hint { color: var(--text-2); font-size: 0.85rem; display: inline-flex; align-items: center; gap: 7px; }
+  .examples-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin: 20px 0 10px; }
+  .examples { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { background: #f7f9fc; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: 0.8rem;
+    color: var(--text-2); cursor: pointer; transition: all 0.15s; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-lighter); }
+  .loader { margin-top: 18px; }
+  .loader .lbl { font-size: 0.8rem; color: var(--text-2); margin-bottom: 7px; display: flex; justify-content: space-between; }
+  .loader .track { height: 6px; background: #eef1f7; border-radius: 6px; overflow: hidden; }
+  .loader .fill { height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--primary), #6b8cff); transition: width 0.35s ease; }
+  .result { margin-top: 20px; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.5s ease, opacity 0.4s; }
+  .result.show { max-height: 640px; opacity: 1; }
+  .result-card { border-radius: 12px; padding: 20px; border: 1px solid var(--line); position: relative; overflow: hidden; }
+  .r-ham { background: linear-gradient(180deg, var(--success-lt), #fff 55%); }
+  .r-spam { background: linear-gradient(180deg, var(--warning-lt), #fff 55%); }
+  .r-smishing { background: linear-gradient(180deg, var(--error-lt), #fff 55%); }
+  .verdict { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .verdict .vicon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; flex: none; color: #fff; }
   .verdict .vicon svg { width: 23px; height: 23px; }
-  .r-ham .vicon { background: rgba(47,190,138,0.14); color: var(--ham); }
-  .r-spam .vicon { background: rgba(230,169,60,0.14); color: var(--spam); }
-  .r-smishing .vicon { background: rgba(240,87,111,0.14); color: var(--smish); }
-  .verdict .txt small { display: block; color: var(--muted); font-size: 0.76rem; font-weight: 500; letter-spacing: 0.02em; margin-bottom: 2px; }
-  .verdict .txt .name { font-family: "Space Grotesk"; font-weight: 600; font-size: 1.55rem; line-height: 1.1; letter-spacing: -0.01em; }
-  .n-ham { color: var(--ham); } .n-spam { color: var(--spam); } .n-smishing { color: var(--smish); }
-  .bar-row { display: flex; align-items: center; gap: 14px; margin: 11px 0; }
-  .bar-label { width: 76px; font-size: 0.85rem; color: var(--muted); text-transform: capitalize; }
-  .bar-track { flex: 1; height: 9px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; }
+  .r-ham .vicon { background: var(--success); } .r-spam .vicon { background: var(--warning); } .r-smishing .vicon { background: var(--error); }
+  .verdict .txt small { display: block; color: var(--text-2); font-size: 0.76rem; font-weight: 500; margin-bottom: 1px; }
+  .verdict .txt .name { font-weight: 700; font-size: 1.5rem; line-height: 1.1; }
+  .n-ham { color: var(--success); } .n-spam { color: var(--warning); } .n-smishing { color: var(--error); }
+  .bar-row { display: flex; align-items: center; gap: 13px; margin: 9px 0; }
+  .bar-label { width: 74px; font-size: 0.84rem; color: var(--text-2); text-transform: capitalize; }
+  .bar-track { flex: 1; height: 9px; background: #eef1f7; border-radius: 6px; overflow: hidden; }
   .bar-fill { height: 100%; width: 0; border-radius: 6px; transition: width 0.7s cubic-bezier(.2,.8,.2,1); }
-  .bar-val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.85rem; font-weight: 600; }
-  .divider { height: 1px; background: var(--line); margin: 18px 0; }
-  .cue-head { font-size: 0.76rem; color: var(--muted); letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 9px; }
+  .bar-val { width: 44px; text-align: right; font-variant-numeric: tabular-nums; font-size: 0.84rem; font-weight: 600; }
+  .divider { height: 1px; background: var(--line); margin: 16px 0; }
+  .cue-head { font-size: 0.74rem; color: var(--text-2); letter-spacing: 0.03em; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
   .meta { display: flex; gap: 8px; flex-wrap: wrap; }
-  .cue { background: rgba(255,255,255,0.04); border: 1px solid var(--line-strong); color: var(--text); border-radius: 7px; padding: 5px 12px; font-size: 0.8rem; font-weight: 450; }
-  .latency { color: var(--muted); font-size: 0.82rem; margin-top: 18px; font-variant-numeric: tabular-nums; }
-  .latency b { color: var(--text); font-weight: 600; }
-  footer { text-align: center; color: var(--muted); font-size: 0.8rem; margin-top: 38px; line-height: 1.85; }
-  footer a { color: var(--accent); text-decoration: none; }
-  footer a:hover { text-decoration: underline; }
-  .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.28); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
-  .hint .spinner { border-top-color: var(--accent); }
+  .cue { background: #fff; border: 1px solid var(--line); color: var(--text); border-radius: 7px; padding: 4px 11px; font-size: 0.79rem; font-weight: 500; }
+  .latency { color: var(--text-2); font-size: 0.82rem; margin-top: 16px; font-variant-numeric: tabular-nums; }
+  .latency b { color: var(--text); }
+
+  /* sections */
+  section.block { padding: 56px 0; }
+  section.block.alt { background: linear-gradient(180deg, #fff, #f4f6fb); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .center { text-align: center; }
+  .center .section-sub { margin: 0 auto; }
+
+  /* pipeline */
+  .pipeline { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 36px; position: relative; }
+  @media (max-width: 820px) { .pipeline { grid-template-columns: 1fr 1fr; } }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 16px; text-align: center; box-shadow: var(--shadow); position: relative; }
+  .step .num { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); width: 24px; height: 24px; border-radius: 50%;
+    background: var(--primary); color: #fff; font-size: 0.76rem; font-weight: 600; display: grid; place-items: center; }
+  .step .ic { width: 40px; height: 40px; margin: 8px auto 12px; display: grid; place-items: center; border-radius: 11px; background: var(--primary-lighter); color: var(--primary); }
+  .step .ic svg { width: 21px; height: 21px; }
+  .step h4 { margin: 0 0 5px; font-size: 0.98rem; font-weight: 600; }
+  .step p { margin: 0; font-size: 0.82rem; color: var(--text-2); line-height: 1.45; }
+
+  /* feature grid */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 36px; }
+  @media (max-width: 820px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+  .feature { padding: 24px; }
+  .feature .ic { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; margin-bottom: 15px; color: #fff; }
+  .feature .ic svg { width: 23px; height: 23px; }
+  .feature h3 { margin: 0 0 8px; font-size: 1.12rem; font-weight: 600; }
+  .feature p { margin: 0; color: var(--text-2); font-size: 0.92rem; }
+  .feature .kv { margin-top: 14px; display: flex; flex-direction: column; gap: 7px; }
+  .feature .kv div { display: flex; justify-content: space-between; font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 7px; }
+  .feature .kv span:first-child { color: var(--text-2); } .feature .kv span:last-child { font-weight: 600; }
+
+  /* stat cards */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 36px; }
+  @media (max-width: 820px) { .stats { grid-template-columns: 1fr 1fr; } }
+  .stat { padding: 22px; text-align: left; }
+  .stat .big { font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
+  .stat .lbl { color: var(--text-2); font-size: 0.86rem; margin-top: 2px; }
+
+  /* results table */
+  .table-wrap { margin-top: 30px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); font-size: 0.92rem; min-width: 520px; }
+  th, td { padding: 14px 18px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { background: #fafbfe; font-weight: 600; color: var(--text-2); font-size: 0.8rem; letter-spacing: 0.03em; text-transform: uppercase; }
+  tr:last-child td { border-bottom: 0; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+  .best { color: var(--primary); }
+  .badge-best { background: var(--primary-lighter); color: var(--primary); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
+
+  /* finding cards */
+  .findings { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
+  @media (max-width: 820px) { .findings { grid-template-columns: 1fr; } }
+  .finding { padding: 22px; border-top: 3px solid var(--primary); }
+  .finding .tag { font-size: 0.72rem; font-weight: 600; color: var(--primary); letter-spacing: 0.05em; }
+  .finding h3 { margin: 6px 0 10px; font-size: 1.05rem; font-weight: 600; }
+  .finding .delta { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .finding .delta .from { color: var(--muted); text-decoration: line-through; font-size: 0.95rem; }
+  .finding .delta .to { font-size: 1.5rem; font-weight: 700; }
+  .finding p { margin: 0; font-size: 0.88rem; color: var(--text-2); }
+  .up { color: var(--success); } .down { color: var(--error); }
+
+  footer { padding: 40px 0; border-top: 1px solid var(--line); background: var(--surface); }
+  footer .container { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  footer .muted { color: var(--text-2); font-size: 0.86rem; }
+  .spinner { width: 15px; height: 15px; border: 2px solid rgba(51,102,255,0.28); border-top-color: var(--primary); border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
+  .primary .spinner { border-color: rgba(255,255,255,0.4); border-top-color: #fff; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<div class="grid-overlay"></div>
 
-<div class="wrap">
-  <header>
-    <div class="logo">
-      <span class="mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
-      </span>
-      <span class="name">IndoSmish</span>
-    </div>
-    <div class="tag">Tri-class ham · spam · smishing detection for code-mixed Malayalam–English SMS, running fully on-device.</div>
-    <div class="privacy">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      Your message never leaves your browser
-    </div>
-  </header>
+<!-- NAV -->
+<nav class="nav"><div class="container nav-inner">
+  <div class="brand">
+    <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></span>
+    IndoSmish
+  </div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#model">Model</a>
+    <a href="#data">Datasets</a>
+    <a href="#results">Results</a>
+    <a class="nav-cta" href="https://github.com/codewithcid/indosmish" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</div></nav>
 
-  <div class="card">
-    <label class="field-label" for="input">SMS message</label>
-    <textarea id="input" placeholder="Paste a message — English or Romanized Malayalam–English, e.g. “ningalude account block aayi, ee link click cheyyu”"></textarea>
+<!-- HERO + DEMO -->
+<header class="hero"><div class="container hero-inner">
+  <div>
+    <span class="eyebrow">On-device smishing detection</span>
+    <h1>Catch SMS fraud in <span class="grad">code-mixed</span> Malayalam–English.</h1>
+    <p class="lead">A fine-tuned IndicBERT classifier that separates <b>ham</b>, <b>spam</b>, and <b>smishing</b> — running entirely in your browser. No server, no data sent anywhere.</p>
+    <div class="pill-row">
+      <span class="pill green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> 100% on-device</span>
+      <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ~15 ms / message</span>
+      <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg> tri-class</span>
+    </div>
+  </div>
+
+  <div class="card demo">
+    <label class="field-label" for="input">Try it — paste an SMS</label>
+    <textarea id="input" placeholder="English or Romanized Malayalam–English, e.g. “ningalude account block aayi, ee link click cheyyu”"></textarea>
     <div class="row">
       <button class="primary" id="go" disabled><span id="goText">Loading model</span></button>
       <span class="hint" id="status"><span class="spinner"></span> Downloading detector (~130 MB, one-time)</span>
     </div>
-
     <div class="loader" id="loader">
       <div class="lbl"><span id="loaderLbl">Preparing</span><span id="loaderPct">0%</span></div>
       <div class="track"><div class="fill" id="loaderBar"></div></div>
     </div>
-
     <div class="examples-label">Try an example</div>
     <div class="examples" id="examples"></div>
+    <div class="result" id="result"><div class="result-card" id="resultCard">
+      <div class="verdict"><span class="vicon" id="vIcon"></span>
+        <span class="txt"><small id="vSub">Verdict</small><span class="name" id="vName"></span></span></div>
+      <div id="bars"></div>
+      <div id="cueWrap" style="display:none"><div class="divider"></div><div class="cue-head">Signals detected</div><div class="meta" id="cues"></div></div>
+      <div class="latency" id="latency"></div>
+    </div></div>
+  </div>
+</div></header>
 
-    <div class="result" id="result">
-      <div class="result-card" id="resultCard">
-        <div class="accent-line"></div>
-        <div class="verdict">
-          <span class="vicon" id="vIcon"></span>
-          <span class="txt"><small id="vSub">Verdict</small><span class="name" id="vName"></span></span>
-        </div>
-        <div id="bars"></div>
-        <div id="cueWrap" style="display:none">
-          <div class="divider"></div>
-          <div class="cue-head">Signals detected</div>
-          <div class="meta" id="cues"></div>
-        </div>
-        <div class="latency" id="latency"></div>
+<!-- HOW IT WORKS -->
+<section class="block" id="how"><div class="container">
+  <div class="center">
+    <span class="eyebrow">Architecture</span>
+    <h2 class="section-title">How it works</h2>
+    <p class="section-sub">Every step runs client-side. The message is tokenized, passed through a fine-tuned IndicBERT encoder compiled to ONNX, and classified — without a single network request after the one-time model download.</p>
+  </div>
+  <div class="pipeline">
+    <div class="step"><span class="num">1</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10a2 2 0 0 1-2 2H8l-4 3z"/></svg></div><h4>Input SMS</h4><p>Raw code-mixed message, native or Roman script.</p></div>
+    <div class="step"><span class="num">2</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h6M4 7l4 4M14 5h6v2M20 7l-4 4M4 17v2h6M4 17l4-4M20 17v2h-6M20 17l-4-4"/></svg></div><h4>Tokenize</h4><p>SentencePiece tokenizer, 200K-vocab, handles both scripts.</p></div>
+    <div class="step"><span class="num">3</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></div><h4>IndicBERT (ONNX)</h4><p>12-layer Indic encoder runs on WebAssembly via transformers.js.</p></div>
+    <div class="step"><span class="num">4</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg></div><h4>Softmax</h4><p>Three-way probability over ham / spam / smishing.</p></div>
+    <div class="step"><span class="num">5</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div><h4>Verdict</h4><p>Label, confidence, and the persuasion signals detected.</p></div>
+  </div>
+</div></section>
+
+<!-- MODEL -->
+<section class="block alt" id="model"><div class="container">
+  <div class="center">
+    <span class="eyebrow">The model</span>
+    <h2 class="section-title">Fine-tuned IndicBERT, compiled for the edge</h2>
+    <p class="section-sub">An Indic-specialized encoder, fine-tuned on a tri-class corpus and exported to ONNX so it can run at full precision inside any modern browser.</p>
+  </div>
+  <div class="grid-3">
+    <div class="card feature">
+      <div class="ic" style="background:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></div>
+      <h3>IndicBERT encoder</h3>
+      <p>An ALBERT-style model pre-trained on 12 Indian languages — natively suited to Romanized and native-script Indic text.</p>
+      <div class="kv"><div><span>Architecture</span><span>ALBERT · 12 layers</span></div><div><span>Vocabulary</span><span>200K SentencePiece</span></div><div><span>Model size</span><span>~135 MB (ONNX)</span></div></div>
+    </div>
+    <div class="card feature">
+      <div class="ic" style="background:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5M5 8v8l7 5 7-5V8"/></svg></div>
+      <h3>Tri-class fine-tuning</h3>
+      <p>Trained with class-balanced loss to separate smishing from ordinary spam — the hard boundary case that binary filters miss.</p>
+      <div class="kv"><div><span>Classes</span><span>ham · spam · smishing</span></div><div><span>Objective</span><span>weighted cross-entropy</span></div><div><span>Best macro-F1</span><span class="best">0.892</span></div></div>
+    </div>
+    <div class="card feature">
+      <div class="ic" style="background:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10h-10z"/><path d="M12 2v10h10"/></svg></div>
+      <h3>Runs in the browser</h3>
+      <p>Exported to ONNX and executed on WebAssembly via transformers.js — no backend, no message ever leaves the device.</p>
+      <div class="kv"><div><span>Runtime</span><span>ONNX · WASM</span></div><div><span>Latency</span><span>~15 ms / msg</span></div><div><span>Privacy</span><span>fully on-device</span></div></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- DATASETS -->
+<section class="block" id="data"><div class="container">
+  <div class="center">
+    <span class="eyebrow">Training data</span>
+    <h2 class="section-title">Built from open corpora + theory-guided augmentation</h2>
+    <p class="section-sub">No public corpus separates smishing from bulk spam in a code-mixed Indian language — so we assembled one from free sources and persuasion-conditioned synthesis.</p>
+  </div>
+  <div class="stats">
+    <div class="card stat"><div class="big">4,694</div><div class="lbl">total messages (deduplicated)</div></div>
+    <div class="card stat"><div class="big">573</div><div class="lbl">code-mixed smishing (reviewed)</div></div>
+    <div class="card stat"><div class="big">3</div><div class="lbl">open source datasets fused</div></div>
+    <div class="card stat"><div class="big">2</div><div class="lbl">scripts — Roman &amp; Malayalam</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card feature">
+      <h3>Open datasets</h3>
+      <p>Real code-mixed register and labelled English threats, fused into one tri-class corpus.</p>
+      <div class="kv">
+        <div><span>DravidianCodeMix (Ml–En)</span><span>~20K comments</span></div>
+        <div><span>Mishra &amp; Soni tri-class</span><span>5,971 msgs</span></div>
+        <div><span>UCI SMS Spam Collection</span><span>5,574 msgs</span></div>
+      </div>
+    </div>
+    <div class="card feature">
+      <h3>Persuasion-guided augmentation</h3>
+      <p>Smishing seeds expanded into realistic code-mixed lures conditioned on Cialdini persuasion principles, then human-reviewed.</p>
+      <div class="kv">
+        <div><span>Generator</span><span>Llama-3.3-70B</span></div>
+        <div><span>Principles</span><span>urgency · authority · scarcity …</span></div>
+        <div><span>Kept after review</span><span>573 / 750</span></div>
       </div>
     </div>
   </div>
+</div></section>
 
-  <footer>
-    IndoSmish — <i>“From SMS Spam Filters to Quantized LLMs”</i><br />
-    Fine-tuned IndicBERT → ONNX · in-browser inference via <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a> · zero server, full privacy.
-  </footer>
-</div>
+<!-- RESULTS -->
+<section class="block alt" id="results"><div class="container">
+  <div class="center">
+    <span class="eyebrow">Benchmark</span>
+    <h2 class="section-title">Results &amp; findings</h2>
+    <p class="section-sub">Evaluated on a held-out, deduplicated test set with macro-F1 and per-class smishing recall — the metric that matters for a minority fraud class.</p>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Model</th><th>Type</th><th style="text-align:right">Macro-F1</th><th style="text-align:right">Smishing recall</th></tr></thead>
+    <tbody>
+      <tr><td>TF-IDF + Random Forest</td><td>Classical</td><td class="num">0.807</td><td class="num">0.645</td></tr>
+      <tr><td>MuRIL</td><td>Indic encoder</td><td class="num">0.805</td><td class="num">0.803</td></tr>
+      <tr><td>IndicBERT <span class="badge-best">DEPLOYED</span></td><td>Indic encoder</td><td class="num best">0.892</td><td class="num best">0.868</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="findings">
+    <div class="card finding">
+      <span class="tag">FINDING · AUGMENTATION</span>
+      <h3>Code-mixed data unlocks the boundary class</h3>
+      <div class="delta"><span class="from">0.00</span><span class="to up">0.803</span></div>
+      <p>MuRIL's smishing recall, before vs after training on the augmented code-mixed corpus. Without it, every smishing message collapses into spam.</p>
+    </div>
+    <div class="card finding">
+      <span class="tag">FINDING · QUANTIZATION</span>
+      <h3>int8 disproportionately harms fraud detection</h3>
+      <div class="delta"><span class="from">0.868</span><span class="to down">0.368</span></div>
+      <p>Dynamic int8 quantization halves smishing recall while leaving ham untouched — so IndoSmish ships at full precision.</p>
+    </div>
+    <div class="card finding">
+      <span class="tag">FINDING · SCRIPT</span>
+      <h3>A measurable transliteration deficit</h3>
+      <div class="delta"><span class="from">0.868</span><span class="to down">0.658</span></div>
+      <p>The same messages in native Malayalam script score 21 points lower on smishing recall — confirming the deficit reported for transliterated Indic text.</p>
+    </div>
+  </div>
+</div></section>
+
+<footer><div class="container">
+  <span class="muted">IndoSmish — <i>“From SMS Spam Filters to Quantized LLMs”</i></span>
+  <span class="muted">Fine-tuned IndicBERT → ONNX · in-browser via <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a> · <a href="https://github.com/codewithcid/indosmish" target="_blank" rel="noopener">source</a></span>
+</div></footer>
 
 <script type="module">
   import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
@@ -203,9 +372,9 @@
     smishing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V6l7-3z"/><path d="M12 8.5v4"/><path d="M12 15.5v.5"/></svg>',
   };
   const META = {
-    ham: { color: "#2fbe8a", sub: "Looks legitimate" },
-    spam: { color: "#e6a93c", sub: "Bulk / promotional" },
-    smishing: { color: "#f0576f", sub: "Likely fraud — do not act on it" },
+    ham: { color: "#00ac69", sub: "Looks legitimate" },
+    spam: { color: "#f4a100", sub: "Bulk / promotional" },
+    smishing: { color: "#ec4333", sub: "Likely fraud — do not act on it" },
   };
   const CUES = {
     urgency: ["urgent","immediately","expire","block","suspend","24 hour","24hr","last chance","udane","innu","rathri"],
@@ -223,7 +392,7 @@
   ];
   EXAMPLES.forEach((t) => {
     const c = document.createElement("span");
-    c.className = "chip"; c.textContent = t.length > 42 ? t.slice(0,40)+"…" : t;
+    c.className = "chip"; c.textContent = t.length > 40 ? t.slice(0,38)+"…" : t;
     c.title = t; c.onclick = () => { $("input").value = t; classify(); };
     $("examples").appendChild(c);
   });
@@ -236,8 +405,7 @@
       const main = Object.entries(progress).find(([f]) => f.includes("model.onnx"));
       const frac = main ? main[1] : Math.max(0, ...Object.values(progress));
       const pct = Math.min(99, frac * 100);
-      $("loaderBar").style.width = pct + "%";
-      $("loaderPct").textContent = pct.toFixed(0) + "%";
+      $("loaderBar").style.width = pct + "%"; $("loaderPct").textContent = pct.toFixed(0) + "%";
       $("loaderLbl").textContent = "Downloading model";
     } else if (p.status === "done") { $("loaderLbl").textContent = "Finalizing"; }
   }
@@ -249,9 +417,7 @@
       setTimeout(() => { $("loader").style.display = "none"; }, 400);
       $("go").disabled = false; $("goText").textContent = "Classify";
       $("status").innerHTML = "Model ready · runs on-device";
-    } catch (e) {
-      $("status").textContent = "Failed to load model: " + e.message;
-    }
+    } catch (e) { $("status").textContent = "Failed to load model: " + e.message; }
   })();
 
   function findCues(text) {
@@ -267,7 +433,6 @@
     const out = await classifier(text, { top_k: 3 });
     const latency = performance.now() - t0;
     $("go").disabled = false; $("goText").textContent = "Classify";
-
     const probs = {}; out.forEach((o) => { probs[o.label] = o.score; });
     render(out[0].label, probs, findCues(text), latency);
   }
@@ -279,7 +444,6 @@
     $("vSub").textContent = m.sub;
     $("vName").textContent = top.toUpperCase();
     $("vName").className = "name n-" + top;
-
     const bars = $("bars"); bars.innerHTML = "";
     LABELS.forEach((lbl) => {
       const p = (probs[lbl] || 0) * 100;
@@ -290,13 +454,9 @@
       bars.appendChild(row);
       requestAnimationFrame(() => { row.querySelector(".bar-fill").style.width = p + "%"; });
     });
-
     const cueWrap = $("cueWrap"), cueBox = $("cues"); cueBox.innerHTML = "";
-    if (cues.length) {
-      cueWrap.style.display = "block";
-      cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = c; cueBox.appendChild(s); });
-    } else { cueWrap.style.display = "none"; }
-
+    if (cues.length) { cueWrap.style.display = "block"; cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = c; cueBox.appendChild(s); }); }
+    else { cueWrap.style.display = "none"; }
     $("latency").innerHTML = `Classified on-device in <b>${latency.toFixed(0)} ms</b> · IndicBERT (fp32)`;
     $("result").classList.add("show");
   }
