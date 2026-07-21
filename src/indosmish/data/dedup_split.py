@@ -38,7 +38,7 @@ def _load_kept_augmented(cfg: dict) -> pd.DataFrame:
                 {
                     "id": _hash_id(text, "augmented"),
                     "text": text,
-                    "label": "smishing",
+                    "label": r.get("label", "smishing"),  # respect ham hard-negatives
                     "script": detect_script(text),
                     "source": "augmented",
                     "synthetic": True,

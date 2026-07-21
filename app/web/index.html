@@ -411,7 +411,7 @@
 
   (async () => {
     try {
-      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", progress_callback: onProgress });
+      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", revision: "0d816de039b58f8a34b13cd5005cfb0bf5a6d4d5", progress_callback: onProgress });
       $("loaderBar").style.width = "100%"; $("loaderPct").textContent = "100%";
       setTimeout(() => { $("loader").style.display = "none"; }, 400);
       $("go").disabled = false; $("goText").textContent = "Classify";
