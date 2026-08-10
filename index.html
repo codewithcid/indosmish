@@ -4,6 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>IndoSmish — Code-Mixed Smishing Detection</title>
+<meta name="description" content="IndoSmish detects ham, spam, and smishing (SMS fraud) in code-mixed Malayalam–English text using a fine-tuned IndicBERT that runs entirely in your browser — no server, no data leaves your device." />
+<meta name="author" content="Sidhardh S · Advaith Kamath · Joel G. Bert · T. Amarsainadh — VIT-AP University" />
+<meta name="theme-color" content="#3366ff" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233366ff'/%3E%3Cpath d='M16 6l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V9l7-3z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12.5 16l2.5 2.5 4.5-4.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="IndoSmish — On-Device Smishing Detection" />
+<meta property="og:description" content="Tri-class ham / spam / smishing detection for code-mixed Malayalam–English SMS, running fully on-device in your browser." />
+<meta property="og:url" content="https://indosmish-cid.vercel.app" />
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="IndoSmish — On-Device Smishing Detection" />
+<meta name="twitter:description" content="Code-mixed Malayalam–English smishing detection, fully in your browser. No server, full privacy." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -416,7 +427,13 @@
       setTimeout(() => { $("loader").style.display = "none"; }, 400);
       $("go").disabled = false; $("goText").textContent = "Classify";
       $("status").innerHTML = "Model ready · runs on-device";
-    } catch (e) { $("status").textContent = "Failed to load model: " + e.message; }
+    } catch (e) {
+      $("loader").style.display = "none";
+      $("status").textContent = "Couldn't load the detector — please check your connection and refresh.";
+      $("goText").textContent = "Reload";
+      $("go").disabled = false;
+      $("go").onclick = () => location.reload();
+    }
   })();
 
   function findCues(text) {
