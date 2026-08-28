@@ -1,7 +1,25 @@
 {
-  "bos_token": "[CLS]",
-  "cls_token": "[CLS]",
-  "eos_token": "[SEP]",
+  "bos_token": {
+    "content": "[CLS]",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "cls_token": {
+    "content": "[CLS]",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "eos_token": {
+    "content": "[SEP]",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
   "mask_token": {
     "content": "[MASK]",
     "lstrip": true,
@@ -9,7 +27,25 @@
     "rstrip": false,
     "single_word": false
   },
-  "pad_token": "<pad>",
-  "sep_token": "[SEP]",
-  "unk_token": "<unk>"
+  "pad_token": {
+    "content": "<pad>",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "sep_token": {
+    "content": "[SEP]",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  },
+  "unk_token": {
+    "content": "<unk>",
+    "lstrip": false,
+    "normalized": false,
+    "rstrip": false,
+    "single_word": false
+  }
 }

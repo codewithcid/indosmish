@@ -16,3 +16,5 @@ app/backend/model/onnx-int8/
 app/backend/model/onnx-fp16/
 .env
 *.ipynb_checkpoints/
+
+.vercel

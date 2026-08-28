@@ -49,11 +49,15 @@
   "extra_special_tokens": {},
   "keep_accents": false,
   "mask_token": "[MASK]",
+  "max_length": 128,
   "model_max_length": 1000000000000000019884624838656,
   "pad_token": "<pad>",
   "remove_space": true,
   "sep_token": "[SEP]",
   "sp_model_kwargs": {},
+  "stride": 0,
   "tokenizer_class": "AlbertTokenizer",
+  "truncation_side": "right",
+  "truncation_strategy": "longest_first",
   "unk_token": "<unk>"
 }

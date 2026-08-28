@@ -38,6 +38,5 @@
   "position_embedding_type": "absolute",
   "transformers_version": "4.57.6",
   "type_vocab_size": 2,
-  "use_cache": false,
   "vocab_size": 200000
 }
