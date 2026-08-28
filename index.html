@@ -4,17 +4,17 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>IndoSmish — Code-Mixed Smishing Detection</title>
-<meta name="description" content="IndoSmish detects ham, spam, and smishing (SMS fraud) in code-mixed Malayalam–English text using a fine-tuned IndicBERT that runs entirely in your browser — no server, no data leaves your device." />
+<meta name="description" content="IndoSmish detects ham, spam, and smishing (SMS fraud) in code-mixed Malayalam, Hindi and English text using a fine-tuned IndicBERT that runs entirely in your browser — no server, no data leaves your device." />
 <meta name="author" content="Sidhardh S · Advaith Kamath · Joel G. Bert · T. Amarsainadh — VIT-AP University" />
 <meta name="theme-color" content="#3366ff" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%233366ff'/%3E%3Cpath d='M16 6l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V9l7-3z' fill='none' stroke='%23fff' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M12.5 16l2.5 2.5 4.5-4.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="IndoSmish — On-Device Smishing Detection" />
-<meta property="og:description" content="Tri-class ham / spam / smishing detection for code-mixed Malayalam–English SMS, running fully on-device in your browser." />
+<meta property="og:description" content="Tri-class ham / spam / smishing detection for code-mixed Malayalam, Hindi and English SMS, running fully on-device in your browser." />
 <meta property="og:url" content="https://indosmish-cid.vercel.app" />
 <meta name="twitter:card" content="summary" />
 <meta name="twitter:title" content="IndoSmish — On-Device Smishing Detection" />
-<meta name="twitter:description" content="Code-mixed Malayalam–English smishing detection, fully in your browser. No server, full privacy." />
+<meta name="twitter:description" content="Code-mixed Malayalam, Hindi & English smishing detection, fully in your browser. No server, full privacy." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -214,18 +214,18 @@
 <header class="hero"><div class="container hero-inner">
   <div>
     <span class="eyebrow">On-device smishing detection</span>
-    <h1>Catch SMS fraud in <span class="grad">code-mixed</span> Malayalam–English.</h1>
+    <h1>Catch SMS fraud in <span class="grad">code-mixed</span> Malayalam, Hindi &amp; English.</h1>
     <p class="lead">A fine-tuned IndicBERT classifier that separates <b>ham</b>, <b>spam</b>, and <b>smishing</b> — running entirely in your browser. No server, no data sent anywhere.</p>
     <div class="pill-row">
       <span class="pill green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> 100% on-device</span>
+      <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 12h16M4 19h16"/></svg> 3 languages</span>
       <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ~15 ms / message</span>
-      <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h10"/></svg> tri-class</span>
     </div>
   </div>
 
   <div class="card demo">
     <label class="field-label" for="input">Try it — paste an SMS</label>
-    <textarea id="input" placeholder="English or Romanized Malayalam–English, e.g. “ningalude account block aayi, ee link click cheyyu”"></textarea>
+    <textarea id="input" placeholder="English, Hindi or Malayalam — e.g. “aapka account block ho gaya hai, KYC update karein http://bit.ly/x”"></textarea>
     <div class="row">
       <button class="primary" id="go" disabled><span id="goText">Loading model</span></button>
       <span class="hint" id="status"><span class="spinner"></span> Downloading detector (~130 MB, one-time)</span>
@@ -255,7 +255,7 @@
   </div>
   <div class="pipeline">
     <div class="step"><span class="num">1</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v10a2 2 0 0 1-2 2H8l-4 3z"/></svg></div><h4>Input SMS</h4><p>Raw code-mixed message, native or Roman script.</p></div>
-    <div class="step"><span class="num">2</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h6M4 7l4 4M14 5h6v2M20 7l-4 4M4 17v2h6M4 17l4-4M20 17v2h-6M20 17l-4-4"/></svg></div><h4>Tokenize</h4><p>SentencePiece tokenizer, 200K-vocab, handles both scripts.</p></div>
+    <div class="step"><span class="num">2</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h6M4 7l4 4M14 5h6v2M20 7l-4 4M4 17v2h6M4 17l4-4M20 17v2h-6M20 17l-4-4"/></svg></div><h4>Tokenize</h4><p>SentencePiece tokenizer, 200K-vocab, handles Roman, Malayalam &amp; Devanagari.</p></div>
     <div class="step"><span class="num">3</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></div><h4>IndicBERT (ONNX)</h4><p>12-layer Indic encoder runs on WebAssembly via transformers.js.</p></div>
     <div class="step"><span class="num">4</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 4-6"/></svg></div><h4>Softmax</h4><p>Three-way probability over ham / spam / smishing.</p></div>
     <div class="step"><span class="num">5</span><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3.1 7.8-7 9-3.9-1.2-7-4.4-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg></div><h4>Verdict</h4><p>Label, confidence, and the persuasion signals detected.</p></div>
@@ -273,14 +273,14 @@
     <div class="card feature">
       <div class="ic" style="background:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></div>
       <h3>IndicBERT encoder</h3>
-      <p>An ALBERT-style model pre-trained on 12 Indian languages — natively suited to Romanized and native-script Indic text.</p>
+      <p>An ALBERT-style model pre-trained on 12 Indian languages — one encoder serving Malayalam, Hindi and English in Roman, Malayalam and Devanagari scripts.</p>
       <div class="kv"><div><span>Architecture</span><span>ALBERT · 12 layers</span></div><div><span>Vocabulary</span><span>200K SentencePiece</span></div><div><span>Model size</span><span>~135 MB (ONNX)</span></div></div>
     </div>
     <div class="card feature">
       <div class="ic" style="background:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5M5 8v8l7 5 7-5V8"/></svg></div>
       <h3>Tri-class fine-tuning</h3>
       <p>Trained with class-balanced loss to separate smishing from ordinary spam — the hard boundary case that binary filters miss.</p>
-      <div class="kv"><div><span>Classes</span><span>ham · spam · smishing</span></div><div><span>Objective</span><span>weighted cross-entropy</span></div><div><span>Best macro-F1</span><span class="best">0.892</span></div></div>
+      <div class="kv"><div><span>Classes</span><span>ham · spam · smishing</span></div><div><span>Objective</span><span>weighted cross-entropy</span></div><div><span>Macro-F1 (overall)</span><span class="best">0.895</span></div></div>
     </div>
     <div class="card feature">
       <div class="ic" style="background:var(--info)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10h-10z"/><path d="M12 2v10h10"/></svg></div>
@@ -299,28 +299,29 @@
     <p class="section-sub">No public corpus separates smishing from bulk spam in a code-mixed Indian language — so we assembled one from free sources and persuasion-conditioned synthesis.</p>
   </div>
   <div class="stats">
-    <div class="card stat"><div class="big">4,694</div><div class="lbl">total messages (deduplicated)</div></div>
-    <div class="card stat"><div class="big">573</div><div class="lbl">code-mixed smishing (reviewed)</div></div>
-    <div class="card stat"><div class="big">3</div><div class="lbl">open source datasets fused</div></div>
-    <div class="card stat"><div class="big">2</div><div class="lbl">scripts — Roman &amp; Malayalam</div></div>
+    <div class="card stat"><div class="big">8,900</div><div class="lbl">total messages (deduplicated)</div></div>
+    <div class="card stat"><div class="big">2,658</div><div class="lbl">code-mixed smishing (reviewed)</div></div>
+    <div class="card stat"><div class="big">3</div><div class="lbl">languages — ML · HI · EN</div></div>
+    <div class="card stat"><div class="big">3</div><div class="lbl">scripts — Roman · Malayalam · Devanagari</div></div>
   </div>
   <div class="grid-2">
     <div class="card feature">
       <h3>Open datasets</h3>
-      <p>Real code-mixed register and labelled English threats, fused into one tri-class corpus.</p>
+      <p>Real code-mixed register and labelled threats across three languages, fused into one tri-class corpus.</p>
       <div class="kv">
         <div><span>DravidianCodeMix (Ml–En)</span><span>~20K comments</span></div>
+        <div><span>Hindi SMS (ham/spam)</span><span>5,572 msgs</span></div>
         <div><span>Mishra &amp; Soni tri-class</span><span>5,971 msgs</span></div>
         <div><span>UCI SMS Spam Collection</span><span>5,574 msgs</span></div>
       </div>
     </div>
     <div class="card feature">
       <h3>Persuasion-guided augmentation</h3>
-      <p>Smishing seeds expanded into realistic code-mixed lures conditioned on Cialdini persuasion principles, then human-reviewed.</p>
+      <p>Smishing seeds expanded into realistic code-mixed lures — Hinglish and Devanagari — conditioned on Cialdini persuasion principles, then reviewed.</p>
       <div class="kv">
-        <div><span>Generator</span><span>Llama-3.3-70B</span></div>
+        <div><span>Generator</span><span>LLM (persuasion-conditioned)</span></div>
         <div><span>Principles</span><span>urgency · authority · scarcity …</span></div>
-        <div><span>Kept after review</span><span>573 / 750</span></div>
+        <div><span>Reviewed smishing kept</span><span>2,612</span></div>
       </div>
     </div>
   </div>
@@ -331,16 +332,17 @@
   <div class="center">
     <span class="eyebrow">Benchmark</span>
     <h2 class="section-title">Benchmark results</h2>
-    <p class="section-sub">Evaluated on a held-out, deduplicated test set with macro-F1 and per-class smishing recall — the metric that matters for a minority fraud class.</p>
+    <p class="section-sub">The deployed trilingual IndicBERT, evaluated per language on a held-out, deduplicated test set. Smishing recall — catching the minority fraud class — is reported alongside macro-F1.</p>
   </div>
   <div class="table-wrap"><table>
-    <thead><tr><th>Model</th><th>Type</th><th style="text-align:right">Macro-F1</th><th style="text-align:right">Smishing recall</th></tr></thead>
+    <thead><tr><th>Language</th><th>Test set</th><th style="text-align:right">Macro-F1</th><th style="text-align:right">Smishing recall</th></tr></thead>
     <tbody>
-      <tr><td>TF-IDF + Random Forest</td><td>Classical</td><td class="num">0.807</td><td class="num">0.645</td></tr>
-      <tr><td>MuRIL</td><td>Indic encoder</td><td class="num">0.805</td><td class="num">0.803</td></tr>
-      <tr><td>IndicBERT <span class="badge-best">DEPLOYED</span></td><td>Indic encoder</td><td class="num best">0.892</td><td class="num best">0.868</td></tr>
+      <tr><td>Hindi <span class="badge-best">NEW</span></td><td>Hinglish + Devanagari</td><td class="num best">0.930</td><td class="num best">0.976</td></tr>
+      <tr><td>English</td><td>Roman</td><td class="num">0.861</td><td class="num">0.672</td></tr>
+      <tr><td>Overall</td><td>ML · HI · EN</td><td class="num">0.895</td><td class="num">0.796</td></tr>
     </tbody>
   </table></div>
+  <p class="section-sub" style="margin-top:18px">Hindi smishing is measured on a hand-authored gold set held out from training — <b>1.00 recall</b> on native Devanagari and <b>0.97</b> on romanized Hinglish, at <b>0.98 precision</b>. Adding Hindi did not regress Malayalam.</p>
 </div></section>
 
 <footer><div class="container">
@@ -366,17 +368,18 @@
     smishing: { color: "#ec4333", sub: "Likely fraud — do not act on it" },
   };
   const CUES = {
-    urgency: ["urgent","immediately","expire","block","suspend","24 hour","24hr","last chance","udane","innu","rathri"],
-    authority: ["bank","kyc","account","govt","police","rbi","office","customer care","verify","pan"],
-    "reward / scarcity": ["win","won","prize","lottery","free","reward","offer","gift","cashback","labhich","kittum","award"],
-    "action vector": ["click","link","http","bit.ly","call","cheyyu","vilikk","otp","upi","claim"],
+    urgency: ["urgent","immediately","expire","block","suspend","24 hour","24hr","last chance","udane","innu","rathri","turant","jaldi","abhi","warna","band ho","बंद","तुरंत","जल्दी"],
+    authority: ["bank","kyc","account","govt","police","rbi","office","customer care","verify","pan","khata","aadhaar","sarkar","खाता","बैंक","सरकार"],
+    "reward / scarcity": ["win","won","prize","lottery","free","reward","offer","gift","cashback","labhich","kittum","award","jeeta","inaam","इनाम","जीता","लॉटरी"],
+    "action vector": ["click","link","http","bit.ly","call","cheyyu","vilikk","otp","upi","claim","karein","karo","kare","करें","क्लिक","लिंक"],
   };
   const $ = (id) => document.getElementById(id);
 
   const EXAMPLES = [
-    "Hey da, reaching home by 8, dinner undo?",
-    "Ningalude SBI account block aayi, ee link click cheyyu http://bit.ly/x3k KYC update cheyyan",
-    "Congratulations! Ningalkku 25 lakh prize labhichu. Claim cheyyan call 98765XXXXX",
+    "Aapka OTP 483921 hai. Kisi se share na karein. 5 min me expire.",
+    "Aapka account block ho gaya hai, KYC update karein http://bit.ly/x3k warna band ho jayega",
+    "आपका खाता बंद हो जाएगा, तुरंत KYC अपडेट करें http://bit.ly/kyc नहीं तो सेवा रुक जाएगी",
+    "Ningalude SBI account block aayi, ee link click cheyyu http://bit.ly/x3k KYC cheyyan",
     "FLAT 50% OFF this weekend only! Visit our store now",
   ];
   EXAMPLES.forEach((t) => {
@@ -401,7 +404,7 @@
 
   (async () => {
     try {
-      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", revision: "0d816de039b58f8a34b13cd5005cfb0bf5a6d4d5", progress_callback: onProgress });
+      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", revision: "03cdee554ecec16b54686a6f8df821f55f7b58b8", progress_callback: onProgress });
       $("loaderBar").style.width = "100%"; $("loaderPct").textContent = "100%";
       setTimeout(() => { $("loader").style.display = "none"; }, 400);
       $("go").disabled = false; $("goText").textContent = "Classify";
