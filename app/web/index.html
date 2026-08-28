@@ -330,7 +330,7 @@
 <section class="block alt" id="results"><div class="container">
   <div class="center">
     <span class="eyebrow">Benchmark</span>
-    <h2 class="section-title">Results &amp; findings</h2>
+    <h2 class="section-title">Benchmark results</h2>
     <p class="section-sub">Evaluated on a held-out, deduplicated test set with macro-F1 and per-class smishing recall — the metric that matters for a minority fraud class.</p>
   </div>
   <div class="table-wrap"><table>
@@ -341,27 +341,6 @@
       <tr><td>IndicBERT <span class="badge-best">DEPLOYED</span></td><td>Indic encoder</td><td class="num best">0.892</td><td class="num best">0.868</td></tr>
     </tbody>
   </table></div>
-
-  <div class="findings">
-    <div class="card finding">
-      <span class="tag">FINDING · AUGMENTATION</span>
-      <h3>Code-mixed data unlocks the boundary class</h3>
-      <div class="delta"><span class="from">0.00</span><span class="to up">0.803</span></div>
-      <p>MuRIL's smishing recall, before vs after training on the augmented code-mixed corpus. Without it, every smishing message collapses into spam.</p>
-    </div>
-    <div class="card finding">
-      <span class="tag">FINDING · QUANTIZATION</span>
-      <h3>int8 disproportionately harms fraud detection</h3>
-      <div class="delta"><span class="from">0.868</span><span class="to down">0.368</span></div>
-      <p>Dynamic int8 quantization halves smishing recall while leaving ham untouched — so IndoSmish ships at full precision.</p>
-    </div>
-    <div class="card finding">
-      <span class="tag">FINDING · SCRIPT</span>
-      <h3>A measurable transliteration deficit</h3>
-      <div class="delta"><span class="from">0.868</span><span class="to down">0.658</span></div>
-      <p>The same messages in native Malayalam script score 21 points lower on smishing recall — confirming the deficit reported for transliterated Indic text.</p>
-    </div>
-  </div>
 </div></section>
 
 <footer><div class="container">
