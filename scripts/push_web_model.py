@@ -36,15 +36,18 @@ def main() -> None:
         (stage / "README.md").write_text(
             "---\nlibrary_name: transformers.js\npipeline_tag: text-classification\n"
             "license: mit\n---\n\n# IndoSmish IndicBERT (ONNX)\n\n"
-            "Tri-class ham/spam/smishing detector for code-mixed Malayalam-English SMS, "
-            "fine-tuned IndicBERT exported to ONNX for in-browser inference via transformers.js.\n",
+            "Tri-class ham/spam/smishing detector for code-mixed **Malayalam, Hindi and "
+            "English** SMS (Roman, Malayalam and Devanagari scripts), fine-tuned IndicBERT "
+            "exported to ONNX for in-browser inference via transformers.js.\n",
             encoding="utf-8")
 
         create_repo(args.repo, token=token, repo_type="model", exist_ok=True, private=False)
         print(f"Uploading (~{sum(f.stat().st_size for f in stage.rglob('*') if f.is_file())/1e6:.0f} MB)...")
-        HfApi().upload_folder(folder_path=str(stage), repo_id=args.repo, repo_type="model",
-                              token=token, commit_message="ONNX model for transformers.js")
+        info = HfApi().upload_folder(folder_path=str(stage), repo_id=args.repo, repo_type="model",
+                                     token=token, commit_message="Trilingual (ml+hi+en) ONNX model")
+        oid = getattr(info, "oid", None) or getattr(info, "commit_id", None)
     print(f"Done -> https://huggingface.co/{args.repo}")
+    print(f"REVISION={oid}")
 
 
 if __name__ == "__main__":

@@ -70,12 +70,35 @@ def fetch_uci(raw: Path) -> None:
     _save(pd.DataFrame({"text": text, "label": lab}), raw / "uci_sms.csv")
 
 
+def fetch_hindi(raw: Path) -> None:
+    """Hindi ham+spam in Devanagari from the multilingual SMS Spam collection.
+
+    dbarbedillo/SMS_Spam_Multilingual_Collection_Dataset is the UCI SMS Spam set with
+    professional/MT translations; we take the `text_hi` (Hindi, Devanagari) column and
+    its ham/spam label. Free, HF-hosted, no IEEE gate.
+    """
+    from datasets import load_dataset
+
+    print("Hindi SMS (dbarbedillo multilingual, text_hi column)...")
+    try:
+        ds = load_dataset("dbarbedillo/SMS_Spam_Multilingual_Collection_Dataset", split="train")
+    except Exception as e:  # noqa: BLE001
+        print(f"  [skip] could not load: {e}")
+        return
+    text = ds["text_hi"]
+    lab = [str(x).strip().lower() for x in ds["labels"]]
+    rows = [(t, l) for t, l in zip(text, lab)
+            if isinstance(t, str) and t.strip() and l in ("ham", "spam")]
+    _save(pd.DataFrame(rows, columns=["text", "label"]), raw / "hindi_sms.csv")
+
+
 def main() -> None:
     cfg = load_config()
     raw = resolve(cfg["paths"]["raw"])
     raw.mkdir(parents=True, exist_ok=True)
     fetch_dravidian(raw)
     fetch_uci(raw)
+    fetch_hindi(raw)
     print("\nDone. Still needed (1-click, free, no account):")
     print("  Mishra & Soni tri-class -> data/raw/sms_phishing.csv")
     print("  https://data.mendeley.com/datasets/f45bkkt8pr/1")

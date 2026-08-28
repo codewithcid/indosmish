@@ -8,11 +8,44 @@ COLUMNS = [
     "text",        # message text (as stored, in its `script`)
     "label",       # ham | spam | smishing
     "script",      # roman | native
-    "source",      # provenance tag: dravidian_spam | sms_phishing | augmented
+    "lang",        # ml | hi | en  (primary language; per-language eval axis)
+    "source",      # provenance tag: dravidian_codemix | sms_phishing | augmented_* | ...
     "synthetic",   # bool: True for augmented messages (train-only per protocol)
 ]
 
 LABELS = ["ham", "spam", "smishing"]
+
+# Unicode blocks used for script/language detection.
+_MALAYALAM = range(0x0D00, 0x0D80)   # U+0D00–U+0D7F
+_DEVANAGARI = range(0x0900, 0x0980)  # U+0900–U+097F (Hindi)
+
+
+def detect_script(text: str) -> str:
+    """native if any Indic-block char (Malayalam or Devanagari) is present, else roman."""
+    return "native" if any(ord(c) in _MALAYALAM or ord(c) in _DEVANAGARI
+                           for c in str(text)) else "roman"
+
+
+def detect_lang(text: str, source: str = "") -> str:
+    """Primary language tag for the per-language evaluation axis.
+
+    Script is authoritative when a native Indic block is present; otherwise the
+    provenance tag disambiguates romanized code-mix (which no detector reads reliably):
+    romanized augmented Malayalam vs romanized augmented Hindi look alike in Latin.
+    """
+    t = str(text)
+    if any(ord(c) in _DEVANAGARI for c in t):
+        return "hi"
+    if any(ord(c) in _MALAYALAM for c in t):
+        return "ml"
+    # Romanized code-mix: rely on explicit provenance tokens, NOT loose substrings
+    # ('phishing' contains 'hi'; 'sms' contains 'ml'-adjacent noise) — match on tags.
+    s = source.lower()
+    if s.startswith("augmented_ml") or "dravidian" in s or "malayalam" in s:
+        return "ml"
+    if s.startswith("augmented_hi") or "hindi" in s or "gold_hi" in s:
+        return "hi"
+    return "en"
 
 _WS = re.compile(r"\s+")
 _ZERO_WIDTH = dict.fromkeys(map(ord, "​‌‍﻿"), None)

@@ -18,3 +18,5 @@ app/backend/model/onnx-fp16/
 *.ipynb_checkpoints/
 
 .vercel
+scratch_*.log
+dev/null/

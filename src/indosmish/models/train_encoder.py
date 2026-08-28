@@ -25,7 +25,7 @@ from transformers import (
 from ..config import load_config, resolve
 from ..data.schema import LABELS
 from ..eval.metrics import compute_metrics, print_summary, save_result
-from .data_utils import filter_arm, load_split
+from .data_utils import filter_arm, filter_lang, load_split
 
 L2I = {l: i for i, l in enumerate(LABELS)}
 I2L = {i: l for l, i in L2I.items()}
@@ -59,6 +59,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", required=True)
     ap.add_argument("--tag", required=True)
+    ap.add_argument("--exclude-lang", default=None,
+                    help="drop a language from TRAIN only (for the controlled bilingual "
+                         "baseline); val/test are untouched so test sets stay comparable")
     args = ap.parse_args()
 
     cfg = load_config()
@@ -69,6 +72,10 @@ def main() -> None:
     )
 
     train, val = load_split("train"), load_split("val")
+    if args.exclude_lang:
+        before = len(train)
+        train = train[train["lang"] != args.exclude_lang]
+        print(f"Excluded lang={args.exclude_lang} from TRAIN: {before} -> {len(train)} rows")
     ds_tr = _to_ds(train, tok, ecfg["max_length"])
     ds_va = _to_ds(val, tok, ecfg["max_length"])
 
@@ -113,27 +120,48 @@ def main() -> None:
     trainer.save_model(str(out_dir))
     tok.save_pretrained(str(out_dir))
 
-    # Per-arm test evaluation.
+    # Test evaluation.
     test = load_split("test")
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device).eval()
+
+    def predict(texts):
+        preds = []
+        for i in range(0, len(texts), 32):
+            enc = tok(texts[i:i + 32], truncation=True, max_length=ecfg["max_length"],
+                      padding=True, return_tensors="pt").to(device)
+            with torch.no_grad():
+                logits = model(**enc).logits
+            preds += [I2L[int(x)] for x in logits.argmax(-1).cpu()]
+        return preds
+
+    # Overall.
+    m_all = compute_metrics(test["label"].tolist(), predict(test["text"].tolist()))
+    m_all["model"], m_all["arm"] = args.tag, "all"
+    print_summary(f"{args.tag} [all]", m_all)
+    save_result(m_all, f"results/{args.tag}_all.json")
+
+    # Per script arm (protocol section 4).
     for arm in ("roman", "native"):
         part = filter_arm(test, arm)
         if len(part) < 5:
             print(f"[skip] arm={arm}: {len(part)} rows")
             continue
-        preds = []
-        for i in range(0, len(part), 32):
-            batch = part["text"].tolist()[i:i + 32]
-            enc = tok(batch, truncation=True, max_length=ecfg["max_length"],
-                      padding=True, return_tensors="pt").to(device)
-            with torch.no_grad():
-                logits = model(**enc).logits
-            preds += [I2L[int(x)] for x in logits.argmax(-1).cpu()]
-        m = compute_metrics(part["label"].tolist(), preds)
+        m = compute_metrics(part["label"].tolist(), predict(part["text"].tolist()))
         m["model"], m["arm"] = args.tag, arm
         print_summary(f"{args.tag} [{arm}]", m)
         save_result(m, f"results/{args.tag}_{arm}.json")
+
+    # Per language (ml | hi | en) — the multilingual evaluation axis.
+    for lang in ("ml", "hi", "en"):
+        part = filter_lang(test, lang)
+        if len(part) < 5:
+            print(f"[skip] lang={lang}: {len(part)} rows")
+            continue
+        m = compute_metrics(part["label"].tolist(), predict(part["text"].tolist()))
+        m["model"], m["lang"] = args.tag, lang
+        print_summary(f"{args.tag} [lang={lang}]  (n={len(part)})", m)
+        save_result(m, f"results/{args.tag}_lang_{lang}.json")
 
 
 if __name__ == "__main__":

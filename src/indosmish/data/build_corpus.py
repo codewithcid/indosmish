@@ -12,15 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 from ..config import load_config, resolve
-from .schema import COLUMNS, LABELS, normalize_text
-
-# Malayalam Unicode block U+0D00–U+0D7F
-_ML_RANGE = range(0x0D00, 0x0D80)
-
-
-def detect_script(text: str) -> str:
-    """native if any Malayalam-block char is present, else roman."""
-    return "native" if any(ord(c) in _ML_RANGE for c in text) else "roman"
+from .schema import COLUMNS, LABELS, detect_lang, detect_script, normalize_text
 
 
 def _hash_id(text: str, source: str) -> str:
@@ -48,6 +40,7 @@ def _mk_row(text: str, label: str, source: str) -> dict:
         "text": text,
         "label": label,
         "script": detect_script(text),
+        "lang": detect_lang(text, source),
         "source": source,
         "synthetic": False,
     }
@@ -111,15 +104,37 @@ def _balance_ham(df: pd.DataFrame, max_ham: int, seed: int) -> pd.DataFrame:
     return balanced
 
 
+def _cap_ham(df: pd.DataFrame, max_ham: int, seed: int) -> pd.DataFrame:
+    """Uniformly sample ham down to max_ham. Used where native ham is abundant (Hindi),
+    unlike _balance_ham which preserves scarce native code-mix (Malayalam)."""
+    ham = df[df["label"] == "ham"]
+    rest = df[df["label"] != "ham"]
+    if len(ham) <= max_ham:
+        return df
+    ham = ham.sample(n=max_ham, random_state=seed)
+    print(f"  capped ham: sampled {len(ham)} of the pool (cap {max_ham})")
+    return pd.concat([rest, ham], ignore_index=True)
+
+
 def main() -> None:
     cfg = load_config()
     frames = [load_source(name, spec) for name, spec in cfg["sources"].items()]
     unified = pd.concat(frames, ignore_index=True)
     unified = unified[unified["label"].isin(LABELS)].drop_duplicates(subset=["id"])
 
-    max_ham = cfg.get("balance", {}).get("max_ham")
+    # Language-partitioned balancing. The ml/en partition is balanced with the exact
+    # same logic and seed as before Hindi existed, so the frozen ml/en splits remain
+    # byte-identical (paper numbers stay comparable). Hindi is capped independently.
+    bal = cfg.get("balance", {})
+    max_ham = bal.get("max_ham")
+    max_ham_hi = bal.get("max_ham_hi")
+    non_hi = unified[unified["lang"] != "hi"].copy()
+    hi = unified[unified["lang"] == "hi"].copy()
     if max_ham:
-        unified = _balance_ham(unified, max_ham, cfg["seed"])
+        non_hi = _balance_ham(non_hi, max_ham, cfg["seed"])
+    if max_ham_hi:
+        hi = _cap_ham(hi, max_ham_hi, cfg["seed"])
+    unified = pd.concat([non_hi, hi], ignore_index=True)
 
     out_dir = resolve(cfg["paths"]["interim"])
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -129,6 +144,7 @@ def main() -> None:
     print(f"\nWrote {len(unified)} rows -> {out_path}")
     print("By label:", unified["label"].value_counts().to_dict())
     print("By script:", unified["script"].value_counts().to_dict())
+    print("By lang:", unified["lang"].value_counts().to_dict())
     if (unified["label"] == "smishing").sum() < 50:
         print(
             "\n[warn] <50 smishing seeds. Augmentation (S1) is essential — "

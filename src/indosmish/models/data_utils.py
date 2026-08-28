@@ -21,3 +21,10 @@ def filter_arm(df: pd.DataFrame, arm: str) -> pd.DataFrame:
     if arm in ("all", "xlit-norm"):
         return df
     return df[df["script"] == arm]
+
+
+def filter_lang(df: pd.DataFrame, lang: str) -> pd.DataFrame:
+    """Select one language partition (ml | hi | en) for per-language evaluation."""
+    if lang == "all" or "lang" not in df.columns:
+        return df
+    return df[df["lang"] == lang]

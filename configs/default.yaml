@@ -33,6 +33,16 @@ sources:
     text_col: text
     label_col: label                   # Not_offensive -> ham
     max_ham: 1500                       # cap real code-mixed ham to keep balance
+  hindi_sms:                           # Hindi ham+spam, Devanagari (auto-fetched, free)
+    kind: tri_class                    # dbarbedillo SMS_Spam_Multilingual (text_hi col)
+    file: data/raw/hindi_sms.csv
+    text_col: text
+    label_col: label                   # ham/spam
+  gold_hi_smishing:                    # hand-authored Hindi smishing gold (TEST-ONLY)
+    kind: tri_class
+    file: data/raw/gold_hi_smishing.csv
+    text_col: text
+    label_col: label                   # smishing
 
 # How much English spam to Gemini-transform into code-mix (register balance). 0 = off.
 codemix_spam:
@@ -43,6 +53,7 @@ codemix_spam:
 # roman ham is sampled down to reach max_ham. null = keep everything.
 balance:
   max_ham: 3000
+  max_ham_hi: 1500                      # cap Hindi ham independently (mirror ml cap)
 
 split:
   train: 0.70
@@ -54,7 +65,9 @@ augment:
   per_seed: 3                          # variants per seed smishing message
   max_seeds: 250
   rpm_sleep: 4.0                       # seconds between calls (free-tier RPM guard)
-  out: data/interim/augmented_pending_review.jsonl
+  out: data/interim/augmented_pending_review.jsonl          # Malayalam (existing)
+  out_hi: data/interim/augmented_hi_pending_review.jsonl    # Hindi (new)
+  ham_ratio_hi: 0.35                   # fraction of Hindi variants generated as ham hard-negatives
 
 encoder:
   max_length: 128
