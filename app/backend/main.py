@@ -75,21 +75,29 @@ def _load():
     from tokenizers import Tokenizer
 
     mdir = _ensure_model()
-    _tok = Tokenizer.from_file(str(mdir / "tokenizer.json"))
-    _tok.enable_truncation(max_length=MAX_LEN)
-
     so = ort.SessionOptions()
     so.intra_op_num_threads = 1
     so.inter_op_num_threads = 1
     so.enable_cpu_mem_arena = False      # big RSS saving on 512MB tiers
     so.enable_mem_pattern = False
+    # Avoid a second packed copy of the weights on 512 MiB instances.
+    so.add_session_config_entry("session.disable_prepacking", "1")
     # Skip graph optimization: it builds a second in-memory copy of the model during
     # session init, which spikes RSS over 512MB on free tiers. Inference is unaffected
     # for our tiny inputs.
     so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-    _sess = ort.InferenceSession(str(mdir / "model.onnx"), sess_options=so,
+    # External tensor data can be mapped without keeping a serialized copy of
+    # all weights in the graph. The build prepares this lossless FP32 layout.
+    model_path = mdir / "model.external.onnx"
+    if not model_path.exists():
+        model_path = mdir / "model.onnx"
+    _sess = ort.InferenceSession(str(model_path), sess_options=so,
                                  providers=["CPUExecutionProvider"])
     _input_names = {i.name for i in _sess.get_inputs()}
+    # Loading ONNX temporarily holds serialized and parsed weights. Load the
+    # 200K-vocabulary tokenizer afterwards so those peaks do not overlap.
+    _tok = Tokenizer.from_file(str(mdir / "tokenizer.json"))
+    _tok.enable_truncation(max_length=MAX_LEN)
     print(f"Model ready from {mdir} (inputs: {_input_names})")
 
 
