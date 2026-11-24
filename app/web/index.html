@@ -228,7 +228,7 @@
     <textarea id="input" placeholder="English, Hindi or Malayalam — e.g. “aapka account block ho gaya hai, KYC update karein http://bit.ly/x”"></textarea>
     <div class="row">
       <button class="primary" id="go" disabled><span id="goText">Loading model</span></button>
-      <span class="hint" id="status"><span class="spinner"></span> Downloading detector (~130 MB, one-time)</span>
+      <span class="hint" id="status"><span class="spinner"></span> Downloading detector (~72 MB, one-time)</span>
     </div>
     <div class="loader" id="loader">
       <div class="lbl"><span id="loaderLbl">Preparing</span><span id="loaderPct">0%</span></div>
@@ -274,7 +274,7 @@
       <div class="ic" style="background:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg></div>
       <h3>IndicBERT encoder</h3>
       <p>An ALBERT-style model pre-trained on 12 Indian languages — one encoder serving Malayalam, Hindi and English in Roman, Malayalam and Devanagari scripts.</p>
-      <div class="kv"><div><span>Architecture</span><span>ALBERT · 12 layers</span></div><div><span>Vocabulary</span><span>200K SentencePiece</span></div><div><span>Model size</span><span>~135 MB (ONNX)</span></div></div>
+      <div class="kv"><div><span>Architecture</span><span>ALBERT · 12 layers</span></div><div><span>Vocabulary</span><span>200K SentencePiece</span></div><div><span>Model size</span><span>~57 MB (ONNX, int8 embeddings)</span></div></div>
     </div>
     <div class="card feature">
       <div class="ic" style="background:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8l7-5 7 5M5 8v8l7 5 7-5V8"/></svg></div>
@@ -346,7 +346,7 @@
 </div></section>
 
 <footer><div class="container">
-  <span class="muted">IndoSmish — <i>“From SMS Spam Filters to Quantized LLMs”</i></span>
+  <span class="muted">IndoSmish — <a href="https://doi.org/10.1109/ACCESS.2026.3748986" target="_blank" rel="noopener"><i>“Smishing Detection Beyond English Benchmarks: A Critical Review of Code-Mixed Indic Text and On-Device Language Models”</i></a>, IEEE Access 2026</span>
   <span class="muted">Fine-tuned IndicBERT → ONNX · in-browser via <a href="https://github.com/huggingface/transformers.js" target="_blank" rel="noopener">transformers.js</a></span>
 </div></footer>
 
@@ -404,7 +404,7 @@
 
   (async () => {
     try {
-      classifier = await pipeline("text-classification", MODEL, { dtype: "fp32", revision: "03cdee554ecec16b54686a6f8df821f55f7b58b8", progress_callback: onProgress });
+      classifier = await pipeline("text-classification", MODEL, { dtype: "q8", revision: "c75698b5cb2524a2698d77c9f3d98fe3710098a4", progress_callback: onProgress });
       $("loaderBar").style.width = "100%"; $("loaderPct").textContent = "100%";
       setTimeout(() => { $("loader").style.display = "none"; }, 400);
       $("go").disabled = false; $("goText").textContent = "Classify";
@@ -455,7 +455,7 @@
     const cueWrap = $("cueWrap"), cueBox = $("cues"); cueBox.innerHTML = "";
     if (cues.length) { cueWrap.style.display = "block"; cues.forEach((c) => { const s = document.createElement("span"); s.className = "cue"; s.textContent = c; cueBox.appendChild(s); }); }
     else { cueWrap.style.display = "none"; }
-    $("latency").innerHTML = `Classified on-device in <b>${latency.toFixed(0)} ms</b> · IndicBERT (fp32)`;
+    $("latency").innerHTML = `Classified on-device in <b>${latency.toFixed(0)} ms</b> · IndicBERT (int8 embeddings)`;
     $("result").classList.add("show");
   }
 
